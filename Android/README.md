@@ -37,6 +37,7 @@ This sample is an ideal example of how developers can build apps that must remai
 
 ## Project Requirements
 
+- Install open JDK 25 and edit `gradle.propereties` file accordingly to match your exact version
 - Android Studio: Hedgehog (2023.1.1) or newer
 - Android: API 26 (Android 8.0) minimum
 - UI Framework: Jetpack Compose (Material 3)
@@ -86,6 +87,7 @@ Open the file and provide the following configuration values:
 - **username** – Enter the App User username
 - **password** – Enter the App User password
 
+
 ### ⚠️ Caution
 
 If you do not fill out the configuration file, the app **will not sync** with your Capella cluster or endpoint. The app will still work fully offline with a local database.
@@ -97,7 +99,13 @@ To run the app:
 - In Android Studio, select a device or emulator from the toolbar
 - Click the **Run** button or press `Shift + F10`
 
-You should see the Hotels Management App launch with the travel-sample hotels list populated after the initial sync completes.
+You should see the Hotels Management App launch with the travel-sample hotels list populated after the initial sync completes. Search using FTS is also available as well as creating a new Hotel document.
+
+<p align="center">
+<img src="README-assets/1.png" alt="Android Studio Screenshot - Pixel 8 Pro" height="650"/>
+<img src="README-assets/2.png" alt="Android Studio Screenshot - Pixel 8 Pro" height="650"/>
+<img src="README-assets/3.png" alt="Android Studio Screenshot - Pixel 8 Pro" height="650"/>
+</p>
 
 ### Run unit tests
 
