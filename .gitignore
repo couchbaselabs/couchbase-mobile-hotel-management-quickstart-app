@@ -1,34 +1,34 @@
+#iOS part
+.DS_Store
+iOS/ios-swift-quickstart.xcodeproj/project.xcworkspace/xcuserdata
+iOS/ios-swift-quickstart/Config.plist
+iOS/ios-swift-quickstart.xcodeproj/xcuserdata
+
+# Android part
 # Gradle files
-.gradle/
-build/
+Android/.gradle/
+Android/build/
 
 # Local configuration file (sdk path, etc)
-local.properties
+Android/local.properties
 
 # Log/OS Files
-*.log
+Android/*.log
 
 # Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
-*.apk
-output-metadata.json
-
-# IntelliJ
-*.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
+Android/captures/
+Android/.externalNativeBuild/
+Android/.cxx/
+Android/*.aab
+Android/*.apk
+Android/output-metadata.json
 
 # Keystore files
 *.jks
 *.keystore
 
 # Google Services (e.g. APIs or Firebase)
-google-services.json
+Android/google-services.json
 
 # Android Profiling
-*.hprof
+Android/*.hprof
