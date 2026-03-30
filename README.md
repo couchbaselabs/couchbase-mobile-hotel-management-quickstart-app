@@ -99,3 +99,5 @@ The repo is organized as follows
 iOS: This folder includes source code corresponding to the iOS version of the Hotel Quickstart application. Follow the instructions in the [README.md](iOS/README.md) file in the folder to build and run the iOS app.
 
 Android: This folder includes source code corresponding to the Android version of the Hotel Quickstart application. Follow the instructions in the [README.md](Android/README.md) file in that folder to build and run the Android app.
+
+Web: This folder includes source code corresponding to the Web (JavaScript/React) version of the Hotel Quickstart application. Follow the instructions in the [README.md](web/README.md) file in that folder to build and run the web app.
