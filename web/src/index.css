@@ -1,0 +1,268 @@
+/* ─── Design Tokens ─────────────────────────────────────────────────── */
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-modal: #1c2128;
+  --border: #30363d;
+  --accent: #2f81f7;
+  --accent-hover: #58a6ff;
+  --danger: #f85149;
+  --danger-hover: #da3633;
+  --secondary: #21262d;
+  --secondary-hover: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --success: #3fb950;
+  --warning: #f0883e;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --transition: 0.18s ease;
+}
+
+/* ─── Reset & Base ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ─── App Layout ─────────────────────────────────────────────────────── */
+.app { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ─── Header ─────────────────────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 16px;
+}
+.header-left, .header-right { display: flex; align-items: center; gap: 16px; }
+
+.logo { display: flex; align-items: center; gap: 12px; }
+.logo-icon { font-size: 1.8rem; line-height: 1; }
+.app-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
+.app-subtitle { font-size: 0.73rem; color: var(--text-muted); letter-spacing: 0.02em; }
+
+/* ─── Buttons ────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition), opacity var(--transition);
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary { background: var(--secondary); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--secondary-hover); }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+
+/* ─── Sync Status ────────────────────────────────────────────────────── */
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+.sync-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--status-color, var(--text-muted));
+  box-shadow: 0 0 6px var(--status-color, transparent);
+  transition: background var(--transition);
+}
+.sync-label { font-weight: 500; color: var(--status-color, var(--text-secondary)); }
+
+/* ─── Search Section ─────────────────────────────────────────────────── */
+.search-section {
+  padding: 20px 28px 4px;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+.search-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 14px;
+  gap: 10px;
+  transition: border-color var(--transition);
+}
+.search-bar:focus-within { border-color: var(--accent); }
+.search-icon { width: 18px; height: 18px; color: var(--text-muted); flex-shrink: 0; }
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  padding: 12px 0;
+}
+.search-input::placeholder { color: var(--text-muted); }
+.search-clear {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color var(--transition);
+}
+.search-clear:hover { color: var(--text-primary); }
+.result-count { font-size: 0.8rem; color: var(--text-muted); margin-top: 8px; }
+
+/* ─── Hotel List ─────────────────────────────────────────────────────── */
+.app-main { flex: 1; padding: 16px 28px 40px; max-width: 900px; width: 100%; margin: 0 auto; }
+.hotel-list { display: flex; flex-direction: column; gap: 14px; }
+.hotel-list-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* ─── Hotel Card ─────────────────────────────────────────────────────── */
+.hotel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition);
+}
+.hotel-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent)22, var(--shadow);
+  transform: translateY(-1px);
+}
+.hotel-card-body { flex: 1; min-width: 0; }
+.hotel-name { font-size: 1.05rem; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hotel-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
+.hotel-location { font-size: 0.85rem; color: var(--text-secondary); }
+.hotel-phone { font-size: 0.85rem; color: var(--accent); text-decoration: none; }
+.hotel-phone:hover { color: var(--accent-hover); text-decoration: underline; }
+.hotel-description { font-size: 0.82rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hotel-card-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ─── Error Banner ───────────────────────────────────────────────────── */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #2d1515;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  margin: 12px 28px 0;
+  font-size: 0.88rem;
+  color: #ff7b72;
+  max-width: 900px;
+  width: calc(100% - 56px);
+  align-self: center;
+}
+.error-banner button { margin-left: auto; background: none; border: none; color: inherit; cursor: pointer; font-size: 1rem; }
+
+/* ─── Spinner ─────────────────────────────────────────────────────────── */
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Modal ───────────────────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(1, 4, 9, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: fadeIn 0.18s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow);
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+.modal-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 22px; }
+
+/* ─── Hotel Form ─────────────────────────────────────────────────────── */
+.hotel-form { display: flex; flex-direction: column; gap: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 0.82rem; font-weight: 500; color: var(--text-secondary); }
+.form-group input,
+.form-group textarea {
+  background: var(--secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 9px 12px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: border-color var(--transition);
+}
+.form-group input:focus,
+.form-group textarea:focus { border-color: var(--accent); }
+.form-group input::placeholder,
+.form-group textarea::placeholder { color: var(--text-muted); }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .app-header { padding: 12px 16px; }
+  .app-subtitle { display: none; }
+  .app-main, .search-section { padding-left: 16px; padding-right: 16px; }
+  .form-row { grid-template-columns: 1fr; }
+  .hotel-card { flex-direction: column; }
+  .hotel-card-actions { align-self: flex-end; }
+  .error-banner { margin: 12px 16px 0; width: calc(100% - 32px); }
+}
