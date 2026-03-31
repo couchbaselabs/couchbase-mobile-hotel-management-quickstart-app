@@ -7,39 +7,83 @@
  * Mirrors the role of DatabaseManager.kt (Android) and DatabaseManager.swift (iOS).
  */
 
-import { Database, Replicator } from '@couchbase/lite-js';
+import { Database, Replicator, type ReplicatorConfig, type DatabaseConfig } from '@couchbase/lite-js';
 
 const DB_NAME = 'travel-sample';
-const SCOPE_NAME = 'inventory';
-const COLLECTION_NAME = 'hotel';
+const COLLECTION_NAME = 'inventory.hotel';
+
+// Define document types for collections
+// tag::database-schema[]
+interface Geo {
+  [key: string]: any;
+  lat: number;
+  lon: number;
+  accuracy: string;
+}
+
+interface Hotel {
+  [key: string]: any;
+  type: 'hotel';
+  title: string | null;
+  name: string;
+  address: string | null;
+  directions: string | null;
+  phone: string | null;
+  tollfree: string | null;
+  email: string | null;
+  fax: string | null;
+  url: string | null;
+  checkin: string | null;
+  checkout: string | null;
+  price: string | null;
+  geo: Geo | null;
+  id: number;
+  country: string | null;
+  city: string | null;
+  state: string | null;
+  reviews: any[];
+  public_likes: string[];
+  vacancy: boolean;
+  description: string | null;
+  alias: string | null;
+  pets_ok: boolean;
+  free_breakfast: boolean;
+  free_internet: boolean;
+  free_parking: boolean;
+}
+
+// Declare collection with custom scopes
+// tag::declare-custom-scope[]
+interface AppSchema {
+  'inventory.hotel': Hotel;
+}
+
 
 class DatabaseManager {
-  constructor() {
-    /** @type {import('@couchbase/lite-js').Database|null} */
-    this.database = null;
-    /** @type {any} Collection reference */
-    this.collection = null;
-    /** @type {import('@couchbase/lite-js').Replicator|null} */
-    this.replicator = null;
-    /** @type {Function|null} Unsubscribe function for the collection change listener */
-    this._changeListenerToken = null;
-  }
+  database: Database<AppSchema> | null = null;
+  collection: any = null;
+  replicator: Replicator | null = null;
+  _changeListenerToken: any = null;
+
+  constructor() { }
 
   /**
    * Open (or create) the local Couchbase Lite database and obtain the hotel collection.
    */
   async initialize() {
-    const config = {
-      name: DB_NAME,
+
+    // end::database-schema[]
+
+    const config: DatabaseConfig<AppSchema> = {
+      name: 'travel-sample',
       version: 1,
       collections: {
-        [COLLECTION_NAME]: {},
-      },
+        'inventory.hotel': {}
+      }
     };
-
     this.database = await Database.open(config);
     // Access the scoped collection: inventory.hotel
-    this.collection = this.database.collection[COLLECTION_NAME];
+    this.collection = (this.database as any).collections[COLLECTION_NAME];
     console.log('[DatabaseManager] Database initialized:', DB_NAME);
   }
 
@@ -47,10 +91,10 @@ class DatabaseManager {
    * Configure and start continuous bi-directional replication with Capella App Services.
    * @param {{ capellaEndpointUrl: string, username: string, password: string }} config
    */
-  async setupReplication(config) {
+  async setupReplication(config: any) {
     if (!this.database) throw new Error('Database not initialized.');
 
-    const replicator = new Replicator({
+    const replicatorConfig = {
       database: this.database,
       url: config.capellaEndpointUrl,
       collections: {
@@ -61,19 +105,19 @@ class DatabaseManager {
         password: config.password,
       },
       continuous: true,
-    });
+    } as any;
 
-    this.replicator = replicator;
-    await replicator.start();
+    this.replicator = new Replicator(replicatorConfig);
+    await (this.replicator as any).run();
     console.log('[DatabaseManager] Replication started →', config.capellaEndpointUrl);
-    return replicator;
+    return this.replicator;
   }
 
   /**
    * Subscribe to collection changes (live updates).
    * @param {(event: any) => void} callback
    */
-  addChangeListener(callback) {
+  addChangeListener(callback: (event: any) => void) {
     if (!this.collection) throw new Error('Collection not available.');
     this._changeListenerToken = this.collection.addChangeListener(callback);
   }

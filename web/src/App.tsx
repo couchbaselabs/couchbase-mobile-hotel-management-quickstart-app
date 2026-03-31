@@ -10,8 +10,9 @@
  *   - Controller: This file (App.jsx)
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { databaseManager } from './model/DatabaseManager';
+import { Database, type DatabaseConfig } from '@couchbase/lite-js';
 import HotelRepository from './model/HotelRepository';
 import HotelList from './components/HotelList';
 import SearchBar from './components/SearchBar';
@@ -19,16 +20,16 @@ import HotelForm from './components/HotelForm';
 import SyncStatus from './components/SyncStatus';
 
 export default function App() {
-  const [hotels, setHotels] = useState([]);
-  const [filteredHotels, setFilteredHotels] = useState([]);
+  const [hotels, setHotels] = useState<any[]>([]);
+  const [filteredHotels, setFilteredHotels] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  const [syncStatus, setSyncStatus] = useState('idle');
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'connecting' | 'syncing' | 'connected' | 'error'>('idle');
   const [showForm, setShowForm] = useState(false);
-  const [editingHotel, setEditingHotel] = useState(null);
-  const [error, setError] = useState(null);
+  const [editingHotel, setEditingHotel] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const repoRef = useRef(null);
+  const repoRef = useRef<HotelRepository | null>(null);
 
   // ─── Initialization ───────────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export default function App() {
             setSyncStatus('connecting');
             const replicator = await databaseManager.setupReplication(cfg);
             // Monitor replicator status changes
-            replicator.addChangeListener?.((change) => {
+            (replicator as any).addChangeListener?.((change: any) => {
               const activity = change?.status?.activityLevel;
               if (activity === 'BUSY' || activity === 'CONNECTING') setSyncStatus('syncing');
               else if (activity === 'IDLE' || activity === 'STOPPED') setSyncStatus('connected');
@@ -74,14 +75,15 @@ export default function App() {
             });
             setSyncStatus('connected');
           }
-        } catch {
+        } catch (e) {
+          console.error(e);
           // Config missing or unconfigured — offline-only mode is fine
           console.info('[App] No Capella config — running offline.');
         }
       } catch (err) {
         console.error('[App] Init error:', err);
         if (mounted) {
-          setError(err.message);
+          setError(err instanceof Error ? err.message : String(err));
           setLoading(false);
         }
       }
@@ -107,7 +109,7 @@ export default function App() {
 
   // ─── CRUD handlers ────────────────────────────────────────────────────────
 
-  const handleAddOrUpdate = useCallback(async (formData) => {
+  const handleAddOrUpdate = useCallback(async (formData: any) => {
     const repo = repoRef.current;
     if (!repo) return;
     try {
@@ -121,19 +123,19 @@ export default function App() {
       setHotels(all);
     } catch (err) {
       console.error('[App] Save error:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setShowForm(false);
       setEditingHotel(null);
     }
   }, [editingHotel]);
 
-  const handleEdit = useCallback((hotel) => {
+  const handleEdit = useCallback((hotel: any) => {
     setEditingHotel(hotel);
     setShowForm(true);
   }, []);
 
-  const handleDelete = useCallback(async (docId) => {
+  const handleDelete = useCallback(async (docId: string) => {
     const repo = repoRef.current;
     if (!repo) return;
     if (!window.confirm('Delete this hotel?')) return;
@@ -143,7 +145,7 @@ export default function App() {
       setHotels(all);
     } catch (err) {
       console.error('[App] Delete error:', err);
-      setError(err.message);
+      setError(err instanceof Error ? err.message : String(err));
     }
   }, []);
 

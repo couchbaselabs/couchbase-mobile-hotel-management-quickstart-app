@@ -13,10 +13,14 @@ const STATUS_LABELS = {
   error: { label: 'Sync Error', color: '#f85149' },
 };
 
-export default function SyncStatus({ status = 'idle' }) {
+interface SyncStatusProps {
+  status?: 'idle' | 'connecting' | 'syncing' | 'connected' | 'error';
+}
+
+export default function SyncStatus({ status = 'idle' }: SyncStatusProps) {
   const { label, color } = STATUS_LABELS[status] ?? STATUS_LABELS.idle;
   return (
-    <div className="sync-status" style={{ '--status-color': color }}>
+    <div className="sync-status" style={{ '--status-color': color } as React.CSSProperties}>
       <span className="sync-dot" />
       <span className="sync-label">{label}</span>
     </div>

@@ -14,7 +14,13 @@ const EMPTY_FORM = {
   description: '',
 };
 
-export default function HotelForm({ initialData, onSubmit, onCancel }) {
+interface HotelFormProps {
+  initialData?: any;
+  onSubmit: (data: any) => void;
+  onCancel: () => void;
+}
+
+export default function HotelForm({ initialData, onSubmit, onCancel }: HotelFormProps) {
   const [form, setForm] = useState(EMPTY_FORM);
   const isEditing = Boolean(initialData);
 
@@ -33,11 +39,11 @@ export default function HotelForm({ initialData, onSubmit, onCancel }) {
     }
   }, [initialData]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) return;
     onSubmit({ ...form, type: 'hotel' });

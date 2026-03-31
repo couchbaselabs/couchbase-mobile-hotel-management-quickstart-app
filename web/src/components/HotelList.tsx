@@ -3,10 +3,17 @@
  * Renders the full list of hotels as HotelCard components.
  */
 
-import React from 'react';
+
 import HotelCard from './HotelCard';
 
-export default function HotelList({ hotels, loading, onEdit, onDelete }) {
+interface HotelListProps {
+  hotels: any[];
+  loading: boolean;
+  onEdit: (hotel: any) => void;
+  onDelete: (docId: string) => void;
+}
+
+export default function HotelList({ hotels, loading, onEdit, onDelete }: HotelListProps) {
   if (loading) {
     return (
       <div className="hotel-list-empty">

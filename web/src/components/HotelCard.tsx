@@ -4,9 +4,15 @@
  * Provides Edit and Delete actions.
  */
 
-import React from 'react';
 
-export default function HotelCard({ hotel, onEdit, onDelete }) {
+
+interface HotelCardProps {
+  hotel: any;
+  onEdit: (hotel: any) => void;
+  onDelete: (docId: string) => void;
+}
+
+export default function HotelCard({ hotel, onEdit, onDelete }: HotelCardProps) {
   return (
     <div className="hotel-card" data-testid="hotel-card">
       <div className="hotel-card-body">

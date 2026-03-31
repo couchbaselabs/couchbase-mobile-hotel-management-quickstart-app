@@ -108,7 +108,28 @@ npm run dev
 
 Then open [http://localhost:5173](http://localhost:5173) in your browser.
 
+Now connection is pending because of CORS not being set properly:
+
+<img src="README-assets/3.png" alt="Web CB Lite JS Screenshot" height="650"/>
+
+To fix it, go to the Capella UI and add your localhost:5173 to the CORS settings (3 steps).
+
+<img src="README-assets/fix_cors_1.png" alt="Add origin Screenshot" height="650"/>
+<img src="README-assets/fix_cors_2.png" alt="Add login origin and authorization header Screenshot" height="650"/>
+
+Hit the "Save" button and enter "Yes" to acutally save the new CORS settings.
+
 You should see the Hotels Management App load, and the travel-sample hotels list will populate after the initial sync completes.
+
+
+You should see the Hotels Management App launch with the travel-sample hotels list populated after the initial sync completes. Search using FTS is also available as well as creating a new Hotel document.
+
+<p align="center">
+<img src="README-assets/1.png" alt="Web CB Lite JS Screenshot" height="650"/>
+<img src="README-assets/2.png" alt="Web CB Lite JS Screenshot" height="650"/>
+<img src="README-assets/3.png" alt="Web CB Lite JS Screenshot" height="650"/>
+</p>
+
 
 ### ⚠️ Warning
 

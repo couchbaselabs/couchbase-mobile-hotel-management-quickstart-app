@@ -4,9 +4,15 @@
  * (Couchbase Lite JS does not support MATCH() full-text search indexes.)
  */
 
-import React from 'react';
 
-export default function SearchBar({ value, onChange, onClear }) {
+
+interface SearchBarProps {
+  value: string;
+  onChange: (value: string) => void;
+  onClear: () => void;
+}
+
+export default function SearchBar({ value, onChange, onClear }: SearchBarProps) {
   return (
     <div className="search-bar">
       <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

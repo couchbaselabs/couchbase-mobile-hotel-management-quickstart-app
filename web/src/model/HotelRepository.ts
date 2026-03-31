@@ -19,11 +19,10 @@ const FUSE_OPTIONS = {
 };
 
 class HotelRepository {
-  /**
-   * @param {any} database - CBL JS Database instance
-   * @param {any} collection - CBL JS Collection instance (inventory.hotel)
-   */
-  constructor(database, collection) {
+  database: any;
+  collection: any;
+
+  constructor(database: any, collection: any) {
     this.database = database;
     this.collection = collection;
   }
@@ -34,7 +33,7 @@ class HotelRepository {
    */
   async getAllHotels() {
     const query = this.database.createQuery(
-      `SELECT hotel.*, META().id AS _docId
+      `SELECT *, META().id AS _docId
        FROM \`${COLLECTION_NAME}\` AS hotel
        ORDER BY hotel.name ASC`
     );
@@ -47,7 +46,7 @@ class HotelRepository {
    * @param {string} docId
    * @returns {Promise<object|null>}
    */
-  async getHotelById(docId) {
+  async getHotelById(docId: string) {
     const doc = await this.collection.getDocument(docId);
     return doc ? { ...doc, _docId: docId } : null;
   }
@@ -57,7 +56,7 @@ class HotelRepository {
    * @param {object} hotel
    * @returns {Promise<string>} The new document's ID
    */
-  async addHotel(hotel) {
+  async addHotel(hotel: any) {
     const doc = this.collection.createDocument({
       type: 'hotel',
       ...hotel,
@@ -72,7 +71,7 @@ class HotelRepository {
    * @param {string} docId
    * @param {object} data Partial hotel fields to update
    */
-  async updateHotel(docId, data) {
+  async updateHotel(docId: string, data: any) {
     const doc = await this.collection.getDocument(docId);
     if (!doc) throw new Error(`Hotel not found: ${docId}`);
     Object.assign(doc, data);
@@ -84,7 +83,7 @@ class HotelRepository {
    * Delete a hotel document by its ID.
    * @param {string} docId
    */
-  async deleteHotel(docId) {
+  async deleteHotel(docId: string) {
     const doc = await this.collection.getDocument(docId);
     if (!doc) throw new Error(`Hotel not found: ${docId}`);
     await this.collection.delete(doc);
@@ -99,7 +98,7 @@ class HotelRepository {
    * @param {Array} hotels - Pre-fetched hotel list to search within
    * @returns {Array} Matching hotels sorted by relevance score
    */
-  searchHotels(term, hotels) {
+  searchHotels(term: string, hotels: any[]) {
     if (!term || term.trim().length < 2) return hotels;
     const fuse = new Fuse(hotels, FUSE_OPTIONS);
     return fuse.search(term).map((result) => result.item);
@@ -107,12 +106,12 @@ class HotelRepository {
 }
 
 // Collection name constant (scoped by Couchbase schema)
-const COLLECTION_NAME = 'hotel';
+const COLLECTION_NAME = 'inventory.hotel';
 
 /**
  * Normalize a raw CBL JS query result row into a plain hotel object.
  */
-function normalizeHotel(row) {
+function normalizeHotel(row: any) {
   // SQL++ SELECT hotel.* returns fields under a 'hotel' key when aliased
   const h = row.hotel || row;
   return {
