@@ -10,6 +10,10 @@ import HotelRepository from '../model/HotelRepository';
 
 // ─── Mock collection and database ─────────────────────────────────────────
 
+vi.mock('@couchbase/lite-js', () => ({
+  meta: vi.fn((doc) => ({ id: doc._id })),
+}));
+
 const MOCK_HOTELS = [
   { _docId: 'hotel-1', id: 1, name: 'The Grand Plaza', country: 'USA', city: 'New York', type: 'hotel', phone: '+1-555-001', description: 'Luxury hotel in Manhattan' },
   { _docId: 'hotel-2', id: 2, name: 'Eiffel Suites', country: 'France', city: 'Paris', type: 'hotel', phone: '+33-1-001', description: 'Charming suites near the Eiffel Tower' },

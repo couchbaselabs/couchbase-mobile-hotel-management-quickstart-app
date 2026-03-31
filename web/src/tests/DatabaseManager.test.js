@@ -16,7 +16,7 @@ const mockCollection = {
 };
 
 const mockDatabase = {
-  collection: { hotel: mockCollection },
+  collections: { 'inventory.hotel': mockCollection },
   close: vi.fn(),
   createQuery: vi.fn(() => ({
     execute: vi.fn(async () => []),

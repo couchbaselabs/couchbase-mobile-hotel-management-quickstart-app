@@ -94,7 +94,7 @@ class DatabaseManager {
   async setupReplication(config: any) {
     if (!this.database) throw new Error('Database not initialized.');
 
-    const replicatorConfig = {
+    const replicatorConfig: ReplicatorConfig = {
       database: this.database,
       url: config.capellaEndpointUrl,
       collections: {
