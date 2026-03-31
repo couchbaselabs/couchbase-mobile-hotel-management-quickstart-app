@@ -153,18 +153,25 @@ On launch, the app initialises a local Couchbase Lite database in the browser's 
 // DatabaseManager.js
 import { Database, Replicator } from '@couchbase/lite-js';
 
-const config = { name: 'travel-sample', version: 1, collections: { hotel: {} } };
+const config = { name: 'travel-sample', version: 1, collections: { 'inventory.hotel': {} } };
 this.database = await Database.open(config);
-this.collection = this.database.collection['hotel'];
+this.collection = this.database.collection['inventory.hotel'];
 
-const replicator = new Replicator({
+const replicatorConfig: ReplicatorConfig = {
   database: this.database,
   url: config.capellaEndpointUrl,
-  collections: { hotel: { pull: {}, push: {} } },
-  credentials: { username: config.username, password: config.password },
+  collections: {
+    [COLLECTION_NAME]: { pull: {}, push: {} },
+  },
+  credentials: {
+    username: config.username,
+    password: config.password,
+  },
   continuous: true,
-});
-await replicator.start();
+} as any;
+
+this.replicator = new Replicator(replicatorConfig);
+await (this.replicator as any).run();
 ```
 
 Learn more:
