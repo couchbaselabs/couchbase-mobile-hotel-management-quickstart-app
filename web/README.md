@@ -112,7 +112,7 @@ Now connection is pending because of CORS not being set properly:
 
 <img src="README-assets/error_cors.png" alt="Web CB Lite JS Screenshot" height="150"/>
 
-To fix it, go to the Capella UI and add your localhost:5173 to the CORS settings (3 steps).
+To fix it, go to the Capella UI and add your Origin and Login Origin ([http://localhost:5173](http://localhost:5173)) to the CORS settings. Also add the <b>Authorization</b> header to the list of Custom HTTP Headers.
 
 <img src="README-assets/fix_cors_1.png" alt="Add origin Screenshot" height="650"/>
 <img src="README-assets/fix_cors_2.png" alt="Add login origin and authorization header Screenshot" height="650"/>
