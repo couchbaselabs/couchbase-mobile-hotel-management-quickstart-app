@@ -9,6 +9,7 @@
  */
 
 import Fuse from 'fuse.js';
+import { meta } from '@couchbase/lite-js';
 
 /** Fuse.js options: search on name, country, and description fields */
 const FUSE_OPTIONS = {
@@ -57,13 +58,13 @@ class HotelRepository {
    * @returns {Promise<string>} The new document's ID
    */
   async addHotel(hotel: any) {
-    const doc = this.collection.createDocument({
+    const doc = this.collection.createDocument(null, {
       type: 'hotel',
       ...hotel,
     });
     await this.collection.save(doc);
     console.log('[HotelRepository] Hotel added:', hotel.name);
-    return doc._id;
+    return meta(doc).id;
   }
 
   /**
