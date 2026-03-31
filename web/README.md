@@ -3,7 +3,6 @@
 > **Note:** Please refer to the [global README.md](../README.md) for the Introduction and Capella Setup instructions before proceeding.
 
 ## App Overview
-
 This web sample app demonstrates how to build a simple offline-first application using React, Couchbase Lite for JavaScript, and Capella App Services — the fully managed version of Sync Gateway and Couchbase Server. The app presents a basic hotel listing interface powered by data from the `travel-sample` dataset, which is hosted in Couchbase Capella and synced locally to the browser using IndexedDB.
 
 The project serves as a quickstart for developers building web apps (including Progressive Web Apps) that require embedded database functionality with support for local reads/writes, flexible querying, and real-time synchronization with the cloud.
@@ -22,7 +21,6 @@ It covers the essentials of:
 This sample is an ideal example of how developers can build web apps that must remain usable without a network connection and synchronize data reliably once connectivity is restored.
 
 ## Setup and Technology Stack
-
 - Capella / Capella App Services
 - Couchbase Lite JavaScript SDK (`@couchbase/lite-js`)
 - React 19 + Vite
@@ -30,7 +28,6 @@ This sample is an ideal example of how developers can build web apps that must r
 - MVC architecture: `DatabaseManager` + `HotelRepository` (Model), React components (View), `App.jsx` (Controller)
 
 ## Features
-
 - Offline-first data access with Couchbase Lite (IndexedDB)
 - React interface listing hotels from Capella
 - Secure data sync using App Services (BasicAuth)
@@ -41,7 +38,6 @@ This sample is an ideal example of how developers can build web apps that must r
 - Unit tests with Vitest + Testing Library (mocked CBL JS SDK)
 
 ## Project Requirements
-
 - Node.js: 18 or newer
 - npm: 9 or newer
 - Browser: Chrome, Firefox, Edge, or Safari (IndexedDB required)
@@ -53,7 +49,6 @@ This sample is an ideal example of how developers can build web apps that must r
 ## Installation Instructions
 
 ### Clone this repository
-
 Use the terminal to clone the GitHub repository:
 
 ```bash
@@ -61,7 +56,6 @@ git clone https://github.com/couchbase-examples/hotel-management-quickstart-app.
 ```
 
 ### Open the project
-
 Navigate to the `web` subfolder:
 
 ```bash
@@ -69,13 +63,11 @@ cd Hotel_Management_Quickstart_App/web
 ```
 
 ### Install dependencies
-
 ```bash
 npm install
 ```
 
 ### Configure the app
-
 Inside the `public/` folder, locate the config file:
 
 ```
@@ -96,12 +88,10 @@ Open the file and provide the following configuration values:
 - **username** – Enter the App User username
 - **password** – Enter the App User password
 
-### ⚠️ Caution
-
+### Caution
 If you do not fill out the configuration file, the app **will not sync** with your Capella cluster or endpoint. The app will still work fully offline with a local database.
 
 ### Run the app
-
 ```bash
 npm run dev
 ```
@@ -128,12 +118,10 @@ Refresh the app page: you should see the Hotels Management App launch with the t
 </p>
 
 
-### ⚠️ Warning
-
+### Warning
 Before running the app, ensure that your browser allows IndexedDB storage (not in private/incognito mode by default on some browsers). The Couchbase Lite JS SDK stores all data in IndexedDB.
 
 ### Run unit tests
-
 ```bash
 npm run test
 ```
@@ -141,11 +129,9 @@ npm run test
 All tests use Vitest with a mocked `@couchbase/lite-js` module and do not require a running Capella backend.
 
 ## Try it Out
-
 After running the app successfully, explore the following key features. Each feature is powered by the `DatabaseManager.js` and `HotelRepository.js` classes in `src/model/`.
 
 ### Database and Replication Operations
-
 **Description:**
 On launch, the app initialises a local Couchbase Lite database in the browser's IndexedDB and sets up continuous replication with Capella App Services. The `hotel` collection from the `inventory` scope is synced from the remote cluster.
 
@@ -179,7 +165,6 @@ Learn more:
 - [Replication](https://docs.couchbase.com/couchbase-lite-javascript/current/replication.html)
 
 ### Document CRUD Operations
-
 **Description:**
 You can add, update, and delete hotel documents from the local database.
 
@@ -206,7 +191,6 @@ await this.collection.delete(doc);
 Learn more: [Working with Documents](https://docs.couchbase.com/couchbase-lite-javascript/current/document.html)
 
 ### Query & Live Query Updates
-
 **Description:**
 The app queries the local database using SQL++ syntax. A collection change listener updates the React state whenever documents change.
 
@@ -228,7 +212,6 @@ Learn more:
 - [Live Queries](https://docs.couchbase.com/couchbase-lite-javascript/current/query-live.html)
 
 ### Full-Text Search (via Fuse.js)
-
 **Description:**
 Since `MATCH()` FTS is not available in the Couchbase Lite JavaScript SDK, the app uses **Fuse.js** for client-side fuzzy search on hotel name, city, and country fields.
 
@@ -245,7 +228,6 @@ const results = fuse.search('Paris').map((r) => r.item);
 Learn more: [Fuse.js documentation](https://www.fusejs.io/)
 
 ### Offline-First Sync
-
 **Description:**
 Even if you disconnect from the network or Capella App Services goes offline, the app continues working with the local database in the browser. Any local changes sync automatically when the connection is restored.
 
@@ -259,7 +241,6 @@ Even if you disconnect from the network or Capella App Services goes offline, th
 Learn more: [Offline-First Architecture](https://www.couchbase.com/blog/couchbase-offline-first-app-use-cases/)
 
 ## Learn more
-
 - [Couchbase Lite JavaScript SDK](https://docs.couchbase.com/couchbase-lite-javascript/current/index.html)
 - [App Services](https://docs.couchbase.com/cloud/app-services/index.html)
 - [App Services Access Control — Channels](https://docs.couchbase.com/cloud/app-services/channels/channels.html)

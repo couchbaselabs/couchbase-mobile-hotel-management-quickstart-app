@@ -2,7 +2,6 @@
 
 > **Note:** Please refer to the [global README.md](../README.md) for the Introduction and Capella Setup instructions before proceeding.
 
-
 ## App Overview
 This iOS sample app demonstrates how to build a simple offline-first SwiftUI application using Couchbase Lite and Capella App Services, fully managed version of Sync gateway and Couchbase Server. The app presents a basic hotel listing interface powered by data from the `travel-sample` dataset, which is hosted in Couchbase Capella and synced locally to the device.
 
@@ -20,7 +19,6 @@ It covers the essentials of:
 This sample is ideal example of how developers can build apps that must remain usable without a network connection and synchronize data reliably once connectivity is restored.
 
 ## Setup and Technology Stack
-
 <img width="700" alt="Screenshot 2025-04-07 at 20 23 39" src="README-assets/1.png" />
 
 - Capella / Capella App Services
@@ -28,7 +26,6 @@ This sample is ideal example of how developers can build apps that must remain u
 - Quick Start iOS Swift App
 
 ## Features
-
 - Offline-first data access with Couchbase Lite  
 - SwiftUI interface listing hotels from Capella  
 - Secure data sync using App Services  
@@ -37,7 +34,6 @@ This sample is ideal example of how developers can build apps that must remain u
 - Unit and UI tests with XCTest
 
 ## Project Requirements
-
 - Xcode: 15.0+  
 - iOS: 16+  
 - Framework: SwiftUI  
@@ -45,13 +41,9 @@ This sample is ideal example of how developers can build apps that must remain u
 - Testing: XCTest (Unit + UI Tests)  
 - Database: Couchbase Lite Swift SDK (3.2.1)
 
-
 ## Installation Instructions
 
-
-
 ### Clone this repository
-
 Use the terminal to clone the GitHub repository:
 
 ```bash
@@ -59,13 +51,11 @@ git clone https://github.com/couchbase-examples/ios-swift-quickstart.git
 ```
 
 ### Open the project in Xcode
-
 - Navigate to the `ios-swift-quickstart` folder where the repo was closed 
 - Open the `ios-swift-quickstart.xcodeproj` file  
   > This should launch Xcode with the project loaded
 
 ### Configure the app
-
 Inside the Project Navigator in Xcode:
 
 - Locate the `Config.plist` file inside the `ios-swift-quickstart` folder
@@ -75,12 +65,10 @@ Inside the Project Navigator in Xcode:
   - **Authentication / Username** – Enter the App User username  
   - **Authentication / Password** – Enter the App User password
 
-### ⚠️ Caution
-
+### Caution
 If you do not fill out the configuration file, the app **will not sync** with your Capella cluster or endpoint.
 
 ### Run the app
-
 To run the app:
 
 - In Xcode, select the device or simulator you'd like to use  
@@ -91,8 +79,7 @@ You should see the Hotels Management App show up in an emulator with the travel-
 
 <img src="README-assets/4.png" alt="Simulator Screenshot - iPhone 16 Pro" height="650"/>
 
-### ⚠️ Warning
-
+### Warning
 Before running the app, make sure that **Swift Package Manager** has finished downloading the Couchbase SDK.
 
 - In the Project Navigator, scroll to the **Package Dependencies** section  
@@ -100,11 +87,9 @@ Before running the app, make sure that **Swift Package Manager** has finished do
 - Wait for it to finish before launching the app
 
 ### Try it Out
-
 After running the app successfully, explore the following key features. Each feature below is supported by code inside the `DatabaseManager.swift` class and demonstrates how Couchbase Lite powers this offline-first experience.
 
 #### Database and Replication Operations
-
 **Description**:  
 On launch, the app initializes a local Couchbase Lite database and sets up continuous replication with Capella App Services. The `hotel` collection from the `inventory` scope is synced down from the remote cluster.
 
@@ -128,7 +113,6 @@ Learn more:
 - [Replication](https://docs.couchbase.com/couchbase-lite/current/swift/replication.html)
 
 #### Document CRUD Operations
-
 **Description**:  
 You can add, update, and delete hotel documents from the local database using simple methods.
 
@@ -169,7 +153,6 @@ for result in results {
 Learn more: [Working with Documents](https://docs.couchbase.com/couchbase-lite/current/swift/document.html)
 
 #### Query & Live Query Updates
-
 **Description**:  
 The app performs flexible queries using SQL-like syntax (N1QL). A live query listener updates the UI whenever matching data changes in real time.
 
@@ -195,7 +178,6 @@ Learn more:
 ---
 
 #### Full-Text Search
-
 **Description**:  
 You can search hotel names using Couchbase Lite’s built-in Full Text Search (FTS). This is enabled via an index created on the `name` field.
 
@@ -213,7 +195,6 @@ let query = try database?.createQuery("SELECT * FROM inventory.hotel WHERE MATCH
 Learn more: [Full Text Search](https://docs.couchbase.com/couchbase-lite/current/swift/fts.html)
 
 #### Offline-First Sync
-
 **Description**:  
 Even if you disconnect from the network or Capella App Services go offline, the app continues working with the local database. Any local changes will sync automatically when the connection is restored.
 
@@ -226,7 +207,6 @@ Even if you disconnect from the network or Capella App Services go offline, the 
 
 Learn more: [Offline-First Architecture](https://www.couchbase.com/blog/couchbase-offline-first-app-use-cases/)
 
-
 ## Learn more
 
 To learn more about Couchbase Lite and the Capacitor plugin, look at the following resources:
@@ -234,7 +214,3 @@ To learn more about Couchbase Lite and the Capacitor plugin, look at the followi
 - [App Services](https://docs.couchbase.com/cloud/app-services/index.html)
 - [App Services Access Control Concepts- Channels](https://docs.couchbase.com/cloud/app-services/channels/channels.html)
 - [App Services Access Control Concepts- Access Control & Data Validation](https://docs.couchbase.com/cloud/app-services/deployment/access-control-data-validation.html)
-
-
-
-

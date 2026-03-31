@@ -2,7 +2,6 @@
 
 > **Note:** Please refer to the [global README.md](../README.md) for the Introduction and Capella Setup instructions before proceeding.
 
-
 ## App Overview
 This Android sample app demonstrates how to build a simple offline-first application using Jetpack Compose, Couchbase Lite, and Capella App Services — the fully managed version of Sync Gateway and Couchbase Server. The app presents a basic hotel listing interface powered by data from the `travel-sample` dataset, which is hosted in Couchbase Capella and synced locally to the device.
 
@@ -20,14 +19,12 @@ It covers the essentials of:
 This sample is an ideal example of how developers can build apps that must remain usable without a network connection and synchronize data reliably once connectivity is restored.
 
 ## Setup and Technology Stack
-
 - Capella / Capella App Services
 - Couchbase Lite Android SDK (Kotlin)
 - Jetpack Compose UI
 - Android ViewModel + StateFlow (MVVM)
 
 ## Features
-
 - Offline-first data access with Couchbase Lite
 - Jetpack Compose interface listing hotels from Capella
 - Secure data sync using App Services
@@ -36,7 +33,6 @@ This sample is an ideal example of how developers can build apps that must remai
 - Unit tests with JUnit 4
 
 ## Project Requirements
-
 - Install open JDK 25 and edit `gradle.propereties` file accordingly to match your exact version
 - Android Studio: Hedgehog (2023.1.1) or newer
 - Android: API 26 (Android 8.0) minimum
@@ -49,10 +45,7 @@ Gradle requires **JDK 17 or later** to run. The Android app is configured to com
 
 ## Installation Instructions
 
-
-
 ### Clone this repository
-
 Use the terminal to clone the GitHub repository:
 
 ```bash
@@ -60,13 +53,11 @@ git clone https://github.com/couchbase-examples/android-kotlin-quickstart.git
 ```
 
 ### Open the project in Android Studio
-
 - Navigate to the `android-kotlin-quickstart` folder
 - Open Android Studio and select **Open** → choose the project directory
 - Wait for Gradle sync to complete
 
 ### Configure the app
-
 Inside the project, locate the config file:
 
 ```
@@ -88,12 +79,10 @@ Open the file and provide the following configuration values:
 - **password** – Enter the App User password
 
 
-### ⚠️ Caution
-
+### Caution
 If you do not fill out the configuration file, the app **will not sync** with your Capella cluster or endpoint. The app will still work fully offline with a local database.
 
 ### Run the app
-
 To run the app:
 
 - In Android Studio, select a device or emulator from the toolbar
@@ -108,7 +97,6 @@ You should see the Hotels Management App launch with the travel-sample hotels li
 </p>
 
 ### Run unit tests
-
 To run unit tests from the terminal:
 
 ```bash
@@ -117,16 +105,13 @@ To run unit tests from the terminal:
 
 If you see a JVM-related error, make sure Gradle is using **JDK 17+** (Android Studio: Settings/Preferences → Build Tools → Gradle → Gradle JDK).
 
-### ⚠️ Warning
-
+### Warning
 Before running the app, make sure Gradle sync has finished and all dependencies (including `couchbase-lite-android-ktx`) have been downloaded successfully.
 
 ## Try it Out
-
 After running the app successfully, explore the following key features. Each feature is powered by the `DatabaseManager.kt` class and demonstrates how Couchbase Lite enables this offline-first experience.
 
 ### Database and Replication Operations
-
 **Description:**
 On launch, the app initializes a local Couchbase Lite database and sets up continuous replication with Capella App Services. The `hotel` collection from the `inventory` scope is synced from the remote cluster.
 
@@ -150,7 +135,6 @@ Learn more:
 - [Replication](https://docs.couchbase.com/couchbase-lite/current/android/replication.html)
 
 ### Document CRUD Operations
-
 **Description:**
 You can add, update, and delete hotel documents from the local database.
 
@@ -195,7 +179,6 @@ query.execute().allResults().forEach { result ->
 Learn more: [Working with Documents](https://docs.couchbase.com/couchbase-lite/current/android/document.html)
 
 ### Query & Live Query Updates
-
 **Description:**
 The app performs flexible queries using SQL++ syntax. A live query listener feeds a `StateFlow` that updates the Compose UI whenever matching data changes.
 
@@ -214,7 +197,6 @@ Learn more:
 - [Live Queries](https://docs.couchbase.com/couchbase-lite/current/android/query-live.html)
 
 ### Full-Text Search
-
 **Description:**
 You can search hotel names using Couchbase Lite's built-in Full Text Search (FTS), enabled via an index on the `name` field.
 
@@ -237,12 +219,10 @@ val query = database.createQuery(
 Learn more: [Full Text Search](https://docs.couchbase.com/couchbase-lite/current/android/fts.html)
 
 ### Offline-First Sync
-
 **Description:**
 Even if you disconnect from the network or Capella App Services goes offline, the app continues working with the local database. Any local changes sync automatically when the connection is restored.
 
 **Try this:**
-
 1. Disable your network or pause the Capella App Endpoint.
 2. Add, edit, or delete a hotel in the app.
 3. Reconnect to the network and watch the changes sync automatically.
@@ -251,10 +231,7 @@ Even if you disconnect from the network or Capella App Services goes offline, th
 Learn more: [Offline-First Architecture](https://www.couchbase.com/blog/couchbase-offline-first-app-use-cases/)
 
 ## Learn more
-
 - [Couchbase Lite on Android](https://docs.couchbase.com/couchbase-lite/current/android/quickstart.html)
 - [App Services](https://docs.couchbase.com/cloud/app-services/index.html)
 - [App Services Access Control — Channels](https://docs.couchbase.com/cloud/app-services/channels/channels.html)
 - [App Services Access Control & Data Validation](https://docs.couchbase.com/cloud/app-services/deployment/access-control-data-validation.html)
-
-
