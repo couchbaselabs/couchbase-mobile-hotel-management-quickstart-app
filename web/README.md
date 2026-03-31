@@ -117,7 +117,7 @@ To fix it, go to the Capella UI and add your localhost:5173 to the CORS settings
 <img src="README-assets/fix_cors_1.png" alt="Add origin Screenshot" height="650"/>
 <img src="README-assets/fix_cors_2.png" alt="Add login origin and authorization header Screenshot" height="650"/>
 
-Hit the "Save" button and enter "Yes" to acutally save the new CORS settings.
+Hit the "Save" button and enter "Yes" to actually save the new CORS settings.
 
 You should see the Hotels Management App load, and the travel-sample hotels list will populate after the initial sync completes.
 
