@@ -161,7 +161,7 @@ const replicatorConfig: ReplicatorConfig = {
   database: this.database,
   url: config.capellaEndpointUrl,
   collections: {
-    [COLLECTION_NAME]: { pull: {}, push: {} },
+    'inventory.hotel': { pull: {}, push: {} },
   },
   credentials: {
     username: config.username,
@@ -212,7 +212,7 @@ The app queries the local database using SQL++ syntax. A collection change liste
 
 ```js
 const query = this.database.createQuery(
-  'SELECT hotel.*, META().id AS _docId FROM `hotel` AS hotel ORDER BY hotel.name ASC'
+  'SELECT *, META().id AS _docId FROM `inventory.hotel` AS hotel ORDER BY hotel.name ASC'
 );
 const results = await query.execute();
 
