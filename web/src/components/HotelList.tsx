@@ -5,11 +5,12 @@
 
 
 import HotelCard from './HotelCard';
+import type { Hotel } from '../model/HotelRepository';
 
 interface HotelListProps {
-  hotels: any[];
+  hotels: Hotel[];
   loading: boolean;
-  onEdit: (hotel: any) => void;
+  onEdit: (hotel: Hotel) => void;
   onDelete: (docId: string) => void;
 }
 
@@ -34,7 +35,7 @@ export default function HotelList({ hotels, loading, onEdit, onDelete }: HotelLi
     <div className="hotel-list" data-testid="hotel-list">
       {hotels.map((hotel) => (
         <HotelCard
-          key={hotel._docId || hotel.id}
+          key={hotel.docId || hotel.id}
           hotel={hotel}
           onEdit={onEdit}
           onDelete={onDelete}

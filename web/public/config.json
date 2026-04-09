@@ -1,5 +1,5 @@
 {
-  "capellaEndpointUrl": "wss://your-endpoint.apps.cloud.couchbase.com/hotels",
-  "username": "your-app-user",
-  "password": "your-password"
+  "capellaEndpointUrl": "wss://etcbf0cdnxowxq2y.apps.cloud.couchbase.com:4984/hotel",
+  "username": "Administrator",
+  "password": "P@ssw0rd1!"
 }

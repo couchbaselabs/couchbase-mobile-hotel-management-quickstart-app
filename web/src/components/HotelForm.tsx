@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import type { Hotel } from '../model/HotelRepository';
 
 const EMPTY_FORM = {
   name: '',
@@ -15,8 +16,8 @@ const EMPTY_FORM = {
 };
 
 interface HotelFormProps {
-  initialData?: any;
-  onSubmit: (data: any) => void;
+  initialData?: Hotel;
+  onSubmit: (data: Partial<Hotel>) => void;
   onCancel: () => void;
 }
 
@@ -28,11 +29,11 @@ export default function HotelForm({ initialData, onSubmit, onCancel }: HotelForm
     if (initialData) {
       setForm({
         name: initialData.name || '',
-        country: initialData.country || '',
-        city: initialData.city || '',
-        address: initialData.address || '',
-        phone: initialData.phone || initialData.phones?.[0] || '',
-        description: initialData.description || '',
+        country: (initialData.country as string) || '',
+        city: (initialData.city as string) || '',
+        address: (initialData.address as string) || '',
+        phone: (initialData.phone as string) || (Array.isArray(initialData.phones) ? String(initialData.phones[0]) : ''),
+        description: (initialData.description as string) || '',
       });
     } else {
       setForm(EMPTY_FORM);

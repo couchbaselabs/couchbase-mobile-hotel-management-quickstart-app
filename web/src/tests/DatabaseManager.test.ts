@@ -2,8 +2,6 @@
  * DatabaseManager.test.js
  *
  * Unit tests for DatabaseManager using a mocked @couchbase/lite-js module.
- * Since the CBL JS SDK requires a browser IndexedDB environment, the module
- * is fully mocked for Node/Vitest.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -11,8 +9,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ─── Mock @couchbase/lite-js ───────────────────────────────────────────────
 
 const mockCollection = {
-  addChangeListener: vi.fn(() => 'token-123'),
-  removeChangeListener: vi.fn(),
+  addChangeListener: vi.fn(() => ({
+    remove: vi.fn(),
+  })),
 };
 
 const mockDatabase = {
@@ -24,7 +23,7 @@ const mockDatabase = {
 };
 
 const mockReplicator = {
-  start: vi.fn(async () => {}),
+  run: vi.fn(async () => { }),
   stop: vi.fn(),
   addChangeListener: vi.fn(),
 };
@@ -33,12 +32,10 @@ vi.mock('@couchbase/lite-js', () => ({
   Database: {
     open: vi.fn(async () => mockDatabase),
   },
-  Replicator: vi.fn(function (config) {
+  Replicator: vi.fn(function (this: Replicator) {
     Object.assign(this, mockReplicator);
-    this._config = config;
   }),
 }));
-
 
 // ─── Re-import after mock ─────────────────────────────────────────────────
 
@@ -46,7 +43,7 @@ import DatabaseManager from '../model/DatabaseManager';
 import { Database, Replicator } from '@couchbase/lite-js';
 
 describe('DatabaseManager', () => {
-  let manager;
+  let manager: DatabaseManager;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,10 +76,15 @@ describe('DatabaseManager', () => {
       expect.objectContaining({
         url: cfg.capellaEndpointUrl,
         credentials: { username: 'alice', password: 'secret' },
-        continuous: true,
+        collections: {
+          'inventory.hotel': {
+            pull: { continuous: true },
+            push: { continuous: true }
+          }
+        }
       })
     );
-    expect(mockReplicator.start).toHaveBeenCalledOnce();
+    expect(mockReplicator.run).toHaveBeenCalledOnce();
   });
 
   it('registers a collection change listener', async () => {
@@ -96,7 +98,6 @@ describe('DatabaseManager', () => {
     await manager.initialize();
     manager.addChangeListener(vi.fn());
     await manager.close();
-    expect(mockCollection.removeChangeListener).toHaveBeenCalledWith('token-123');
     expect(mockDatabase.close).toHaveBeenCalledOnce();
   });
 

@@ -12,21 +12,20 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { databaseManager } from './model/DatabaseManager';
-import { Database, type DatabaseConfig } from '@couchbase/lite-js';
-import HotelRepository from './model/HotelRepository';
+import HotelRepository, { type Hotel } from './model/HotelRepository';
 import HotelList from './components/HotelList';
 import SearchBar from './components/SearchBar';
 import HotelForm from './components/HotelForm';
 import SyncStatus from './components/SyncStatus';
 
 export default function App() {
-  const [hotels, setHotels] = useState<any[]>([]);
-  const [filteredHotels, setFilteredHotels] = useState<any[]>([]);
+  const [hotels, setHotels] = useState<Hotel[]>([]);
+  const [filteredHotels, setFilteredHotels] = useState<Hotel[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'connecting' | 'syncing' | 'connected' | 'error'>('idle');
   const [showForm, setShowForm] = useState(false);
-  const [editingHotel, setEditingHotel] = useState<any>(null);
+  const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const repoRef = useRef<HotelRepository | null>(null);
@@ -40,8 +39,8 @@ export default function App() {
       try {
         await databaseManager.initialize();
         const repo = new HotelRepository(
-          databaseManager.getDatabase(),
-          databaseManager.getCollection()
+          databaseManager.getDatabase()!,
+          databaseManager.getCollection()!
         );
         repoRef.current = repo;
 
@@ -109,12 +108,12 @@ export default function App() {
 
   // ─── CRUD handlers ────────────────────────────────────────────────────────
 
-  const handleAddOrUpdate = useCallback(async (formData: any) => {
+  const handleAddOrUpdate = useCallback(async (formData: Partial<Hotel>) => {
     const repo = repoRef.current;
     if (!repo) return;
     try {
       if (editingHotel) {
-        await repo.updateHotel(editingHotel._docId, formData);
+        await repo.updateHotel(editingHotel.docId, formData);
       } else {
         await repo.addHotel(formData);
       }
@@ -130,7 +129,7 @@ export default function App() {
     }
   }, [editingHotel]);
 
-  const handleEdit = useCallback((hotel: any) => {
+  const handleEdit = useCallback((hotel: Hotel) => {
     setEditingHotel(hotel);
     setShowForm(true);
   }, []);
@@ -215,7 +214,7 @@ export default function App() {
       {/* Add/Edit modal */}
       {showForm && (
         <HotelForm
-          initialData={editingHotel}
+          initialData={editingHotel || undefined}
           onSubmit={handleAddOrUpdate}
           onCancel={handleCancelForm}
         />

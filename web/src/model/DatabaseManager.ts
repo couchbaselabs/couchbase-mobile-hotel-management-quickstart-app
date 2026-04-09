@@ -7,63 +7,30 @@
  * Mirrors the role of DatabaseManager.kt (Android) and DatabaseManager.swift (iOS).
  */
 
-import { Database, Replicator, type ReplicatorConfig, type DatabaseConfig } from '@couchbase/lite-js';
+import { Database, Replicator, Collection, type ListenerToken, type CollectionChange, type ReplicatorConfig, type DatabaseConfig } from '@couchbase/lite-js';
+import type { Hotel } from './HotelRepository';
 
 const DB_NAME = 'travel-sample';
 const COLLECTION_NAME = 'inventory.hotel';
 
-// Define document types for collections
-// tag::database-schema[]
-interface Geo {
-  [key: string]: any;
-  lat: number;
-  lon: number;
-  accuracy: string;
-}
-
-interface Hotel {
-  [key: string]: any;
-  type: 'hotel';
-  title: string | null;
-  name: string;
-  address: string | null;
-  directions: string | null;
-  phone: string | null;
-  tollfree: string | null;
-  email: string | null;
-  fax: string | null;
-  url: string | null;
-  checkin: string | null;
-  checkout: string | null;
-  price: string | null;
-  geo: Geo | null;
-  id: number;
-  country: string | null;
-  city: string | null;
-  state: string | null;
-  reviews: any[];
-  public_likes: string[];
-  vacancy: boolean;
-  description: string | null;
-  alias: string | null;
-  pets_ok: boolean;
-  free_breakfast: boolean;
-  free_internet: boolean;
-  free_parking: boolean;
+export interface SyncConfig {
+  capellaEndpointUrl: string;
+  username: string;
+  password: string;
 }
 
 // Declare collection with custom scopes
 // tag::declare-custom-scope[]
-interface AppSchema {
+export interface AppSchema {
   'inventory.hotel': Hotel;
 }
 
 
 class DatabaseManager {
   database: Database<AppSchema> | null = null;
-  collection: any = null;
+  collection: Collection<Hotel> | null = null;
   replicator: Replicator | null = null;
-  _changeListenerToken: any = null;
+  _changeListenerToken: ListenerToken | null = null;
 
   constructor() { }
 
@@ -81,43 +48,46 @@ class DatabaseManager {
         'inventory.hotel': {}
       }
     };
-    this.database = await Database.open(config);
+    const db = await Database.open(config);
+    this.database = db;
     // Access the scoped collection: inventory.hotel
-    this.collection = (this.database as any).collections[COLLECTION_NAME];
+    this.collection = db.collections[COLLECTION_NAME];
     console.log('[DatabaseManager] Database initialized:', DB_NAME);
   }
 
   /**
    * Configure and start continuous bi-directional replication with Capella App Services.
-   * @param {{ capellaEndpointUrl: string, username: string, password: string }} config
+   * @param {SyncConfig} config
    */
-  async setupReplication(config: any) {
+  async setupReplication(config: SyncConfig) {
     if (!this.database) throw new Error('Database not initialized.');
 
     const replicatorConfig: ReplicatorConfig = {
-      database: this.database,
+      database: this.database as unknown as Database,
       url: config.capellaEndpointUrl,
       collections: {
-        [COLLECTION_NAME]: { pull: {}, push: {} },
+        [COLLECTION_NAME]: {
+          pull: { continuous: true },
+          push: { continuous: true }
+        },
       },
       credentials: {
         username: config.username,
         password: config.password,
       },
-      continuous: true,
-    } as any;
+    };
 
     this.replicator = new Replicator(replicatorConfig);
-    await (this.replicator as any).run();
+    await this.replicator.run();
     console.log('[DatabaseManager] Replication started →', config.capellaEndpointUrl);
     return this.replicator;
   }
 
   /**
    * Subscribe to collection changes (live updates).
-   * @param {(event: any) => void} callback
+   * @param {(event: CollectionChange) => void} callback
    */
-  addChangeListener(callback: (event: any) => void) {
+  addChangeListener(callback: (event: CollectionChange) => void) {
     if (!this.collection) throw new Error('Collection not available.');
     this._changeListenerToken = this.collection.addChangeListener(callback);
   }
@@ -127,14 +97,14 @@ class DatabaseManager {
    */
   removeChangeListener() {
     if (this._changeListenerToken) {
-      this.collection?.removeChangeListener(this._changeListenerToken);
+      this._changeListenerToken.remove();
       this._changeListenerToken = null;
     }
   }
 
   /**
    * Return the hotel collection reference.
-   * @returns {any} Collection
+   * @returns {Collection<Hotel> | null} Collection
    */
   getCollection() {
     return this.collection;

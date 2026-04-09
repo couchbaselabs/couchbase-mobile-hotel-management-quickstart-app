@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import HotelRepository from '../model/HotelRepository';
+import HotelRepository, { type Hotel } from '../model/HotelRepository';
 
 // ─── Mock collection and database ─────────────────────────────────────────
 
@@ -15,27 +15,30 @@ vi.mock('@couchbase/lite-js', () => ({
 }));
 
 const MOCK_HOTELS = [
-  { _docId: 'hotel-1', id: 1, name: 'The Grand Plaza', country: 'USA', city: 'New York', type: 'hotel', phone: '+1-555-001', description: 'Luxury hotel in Manhattan' },
-  { _docId: 'hotel-2', id: 2, name: 'Eiffel Suites', country: 'France', city: 'Paris', type: 'hotel', phone: '+33-1-001', description: 'Charming suites near the Eiffel Tower' },
-  { _docId: 'hotel-3', id: 3, name: 'Tokyo Zen Inn', country: 'Japan', city: 'Tokyo', type: 'hotel', phone: '+81-3-001', description: 'Tranquil inn in Shinjuku' },
+  { docId: 'hotel-1', id: 1, name: 'The Grand Plaza', country: 'USA', city: 'New York', type: 'hotel' as const, phone: '+1-555-001', description: 'Luxury hotel in Manhattan' },
+  { docId: 'hotel-2', id: 2, name: 'Eiffel Suites', country: 'France', city: 'Paris', type: 'hotel' as const, phone: '+33-1-001', description: 'Charming suites near the Eiffel Tower' },
+  { docId: 'hotel-3', id: 3, name: 'Tokyo Zen Inn', country: 'Japan', city: 'Tokyo', type: 'hotel' as const, phone: '+81-3-001', description: 'Tranquil inn in Shinjuku' },
 ];
 
-function makeQueryResult(rows) {
-  return rows.map((row) => ({
+function makeQueryResult(rows: Hotel[]) {
+  return rows.map((row: Hotel) => ({
     hotel: row,
-    _docId: row._docId,
+    // Access docId from the raw mock object since it's not in the Hotel interface
+    docId: row.docId || (row as unknown as Hotel).docId,
   }));
 }
 
 const mockCollection = {
   createDocument: vi.fn((data) => ({ ...data, _id: 'new-id-1' })),
-  save: vi.fn(async () => {}),
-  getDocument: vi.fn(async (id) => MOCK_HOTELS.find((h) => h._docId === id) ?? null),
-  delete: vi.fn(async () => {}),
+  save: vi.fn(async () => { }),
+  getDocument: vi.fn(async (id) => MOCK_HOTELS.find((h) => h.docId === id) ?? null),
+  delete: vi.fn(async () => { }),
 };
 
 const mockQuery = {
-  execute: vi.fn(async () => makeQueryResult(MOCK_HOTELS)),
+  // Cast MOCK_HOTELS to Hotel[] to satisfy the TS compiler. 
+  // We use 'as unknown' because mocks are partial.
+  execute: vi.fn(async () => makeQueryResult(MOCK_HOTELS as unknown as Hotel[])),
 };
 
 const mockDatabase = {
@@ -45,10 +48,11 @@ const mockDatabase = {
 // ─── Tests ─────────────────────────────────────────────────────────────────
 
 describe('HotelRepository', () => {
-  let repo;
+  let repo: HotelRepository;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // @ts-ignore: Mock objects do not implement the full interface
     repo = new HotelRepository(mockDatabase, mockCollection);
   });
 
@@ -76,9 +80,10 @@ describe('HotelRepository', () => {
 
   describe('addHotel()', () => {
     it('creates and saves a new hotel document', async () => {
-      const newHotel = { name: 'The Riviera', country: 'Italy', city: 'Rome', type: 'hotel' };
+      const newHotel = { name: 'The Riviera', country: 'Italy', city: 'Rome', type: 'hotel' as const };
       const docId = await repo.addHotel(newHotel);
       expect(mockCollection.createDocument).toHaveBeenCalledWith(
+        null,
         expect.objectContaining({ name: 'The Riviera', type: 'hotel' })
       );
       expect(mockCollection.save).toHaveBeenCalledOnce();
@@ -112,29 +117,29 @@ describe('HotelRepository', () => {
 
   describe('searchHotels() — Fuse.js', () => {
     it('returns all hotels when search term is empty', () => {
-      const result = repo.searchHotels('', MOCK_HOTELS);
+      const result = repo.searchHotels('', MOCK_HOTELS as unknown as Hotel[]);
       expect(result).toHaveLength(3);
     });
 
     it('returns matching hotels for a valid search term', () => {
-      const result = repo.searchHotels('Paris', MOCK_HOTELS);
+      const result = repo.searchHotels('Paris', MOCK_HOTELS as unknown as Hotel[]);
       expect(result.length).toBeGreaterThanOrEqual(1);
       expect(result[0].name).toBe('Eiffel Suites');
     });
 
     it('returns fuzzy match for partial / typo search', () => {
-      const result = repo.searchHotels('Toko', MOCK_HOTELS); // typo for Tokyo
+      const result = repo.searchHotels('Toko', MOCK_HOTELS as unknown as Hotel[]); // typo for Tokyo
       expect(result.length).toBeGreaterThanOrEqual(1);
       expect(result[0].city).toBe('Tokyo');
     });
 
     it('returns empty array when no match found', () => {
-      const result = repo.searchHotels('zzzznotaplace', MOCK_HOTELS);
+      const result = repo.searchHotels('zzzznotaplace', MOCK_HOTELS as unknown as Hotel[]);
       expect(result).toHaveLength(0);
     });
 
     it('returns all hotels when term is too short (< 2 chars)', () => {
-      const result = repo.searchHotels('a', MOCK_HOTELS);
+      const result = repo.searchHotels('a', MOCK_HOTELS as unknown as Hotel[]);
       expect(result).toHaveLength(3);
     });
   });
