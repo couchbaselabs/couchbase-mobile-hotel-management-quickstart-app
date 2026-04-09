@@ -78,10 +78,14 @@ class DatabaseManager {
     };
 
     this.replicator = new Replicator(replicatorConfig);
-    await this.replicator.run();
-    console.log('[DatabaseManager] Replication started →', config.capellaEndpointUrl);
     return this.replicator;
   }
+
+  async startReplication(replicator: Replicator, config: SyncConfig) {
+    await replicator.run();
+    console.log('[DatabaseManager] Replication started →', config.capellaEndpointUrl);
+  }
+
 
   /**
    * Subscribe to collection changes (live updates).

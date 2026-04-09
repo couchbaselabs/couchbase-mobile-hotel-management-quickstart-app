@@ -70,7 +70,8 @@ describe('DatabaseManager', () => {
       username: 'alice',
       password: 'secret',
     };
-    await manager.setupReplication(cfg);
+    const replicator = await manager.setupReplication(cfg) as Replicator;
+    await manager.startReplication(replicator, cfg);
 
     expect(Replicator).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -17,6 +17,8 @@ import HotelList from './components/HotelList';
 import SearchBar from './components/SearchBar';
 import HotelForm from './components/HotelForm';
 import SyncStatus from './components/SyncStatus';
+import type { Replicator, ReplicatorStatus } from '@couchbase/lite-js';
+
 
 export default function App() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
@@ -66,13 +68,21 @@ export default function App() {
             setSyncStatus('connecting');
             const replicator = await databaseManager.setupReplication(cfg);
             // Monitor replicator status changes
-            (replicator as any).addChangeListener?.((change: any) => {
-              const activity = change?.status?.activityLevel;
-              if (activity === 'BUSY' || activity === 'CONNECTING') setSyncStatus('syncing');
-              else if (activity === 'IDLE' || activity === 'STOPPED') setSyncStatus('connected');
-              else if (activity === 'OFFLINE') setSyncStatus('idle');
-            });
+            replicator.onStatusChange = (status: ReplicatorStatus) => {
+              const activity = status.status;
+              if (status.error) {
+                setSyncStatus('error');
+              } else if (activity === 'busy' || activity === 'connecting') {
+                setSyncStatus('syncing');
+              } else if (activity === 'idle') {
+                setSyncStatus('connected');
+              } else if (activity === 'stopped') {
+                setSyncStatus('idle');
+              }
+            };
             setSyncStatus('connected');
+
+            databaseManager.startReplication(replicator, cfg);
           }
         } catch (e) {
           console.error(e);
