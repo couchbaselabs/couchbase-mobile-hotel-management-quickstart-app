@@ -33,7 +33,6 @@ This sample is an ideal example of how developers can build apps that must remai
 - Unit tests with JUnit 4
 
 ## Project Requirements
-- Install open JDK 25 and edit `gradle.propereties` file accordingly to match your exact version
 - Android Studio: Hedgehog (2023.1.1) or newer
 - Android: API 26 (Android 8.0) minimum
 - UI Framework: Jetpack Compose (Material 3)
@@ -117,17 +116,26 @@ On launch, the app initializes a local Couchbase Lite database and sets up conti
 
 ```kotlin
 CouchbaseLite.init(context)
+Database.log.console.domains = LogDomain.ALL_DOMAINS
+Database.log.console.level = LogLevel.VERBOSE
+
 database = Database("travel-sample")
 collection = database!!.createCollection("hotel", "inventory")
 
 val targetEndpoint = URLEndpoint(URI(config.capellaEndpointUrl))
-val replConfig = ReplicatorConfiguration(targetEndpoint).apply {
-    addCollection(collection, null)
-    type = ReplicatorType.PUSH_AND_PULL
-    isContinuous = true
+val replConfig = ReplicatorConfigurationFactory.newConfig(
+    target = targetEndpoint,
+    collections = mapOf(listOf(collection) to null),
+    type = ReplicatorType.PUSH_AND_PULL,
+    continuous = true,
     authenticator = BasicAuthenticator(config.username, config.password.toCharArray())
+)
+replicator = Replicator(replConfig).apply {
+    addChangeListener { change ->
+        Log.d("Replicator", "Status: ${change.status.activityLevel}")
+    }
+    start()
 }
-replicator = Replicator(replConfig).apply { start() }
 ```
 
 Learn more:
@@ -141,8 +149,7 @@ You can add, update, and delete hotel documents from the local database.
 **Add a hotel document:**
 ```kotlin
 val doc = MutableDocument().apply {
-    setString("type", hotel.type)
-    setInt("id", hotel.id)
+    setString("type", "hotel")
     setString("name", hotel.name)
     setString("country", hotel.country)
     // ... additional fields
@@ -150,30 +157,21 @@ val doc = MutableDocument().apply {
 collection.save(doc)
 ```
 
-**Update a hotel document:**
+**Update a hotel document (using document ID):**
 ```kotlin
-val query = database.createQuery(
-    "SELECT META().id FROM `inventory`.`hotel` AS hotel WHERE hotel.id = \$hotelId"
-).also { it.parameters = Parameters().apply { setInt("hotelId", hotel.id) } }
-
-val docId = query.execute().allResults().first().getString("id")!!
-val mutableDoc = collection.getDocument(docId)!!.toMutable().apply {
+val docId = hotel.documentId ?: return
+val existingDoc = collection.getDocument(docId) ?: return
+val mutableDoc = existingDoc.toMutable().apply {
     setString("name", hotel.name)
     // ... update fields
 }
 collection.save(mutableDoc)
 ```
 
-**Delete a hotel document:**
+**Delete a hotel document (using document ID):**
 ```kotlin
-val query = database.createQuery(
-    "SELECT META().id FROM `inventory`.`hotel` AS hotel WHERE hotel.id = \$hotelId"
-).also { it.parameters = Parameters().apply { setInt("hotelId", hotel.id) } }
-
-query.execute().allResults().forEach { result ->
-    val docId = result.getString("id") ?: return@forEach
-    collection.getDocument(docId)?.let { collection.delete(it) }
-}
+val docId = hotel.documentId ?: return
+collection.getDocument(docId)?.let { doc -> collection.delete(doc) }
 ```
 
 Learn more: [Working with Documents](https://docs.couchbase.com/couchbase-lite/current/android/document.html)
@@ -184,7 +182,7 @@ The app performs flexible queries using SQL++ syntax. A live query listener feed
 
 ```kotlin
 val query = database.createQuery(
-    "SELECT * FROM `inventory`.`hotel` AS hotel ORDER BY hotel.name DESC"
+    "SELECT META().id AS documentId, * FROM `inventory`.`hotel` AS hotel ORDER BY hotel.name DESC"
 )
 query.addChangeListener { change ->
     val hotels = change.results?.allResults()?.mapNotNull { resultToHotel(it) } ?: emptyList()
@@ -202,17 +200,16 @@ You can search hotel names using Couchbase Lite's built-in Full Text Search (FTS
 
 **Index creation:**
 ```kotlin
-val ftsIndex = IndexBuilder.fullTextIndex(FullTextIndexItem.property("name"))
-    .ignoreAccents(false)
+val ftsIndex = FullTextIndexConfiguration("name").ignoreAccents(false)
 collection.createIndex("nameFtsIndex", ftsIndex)
 ```
 
 **Search query:**
 ```kotlin
 val query = database.createQuery(
-    "SELECT * FROM `inventory`.`hotel` AS hotel " +
-    "WHERE MATCH(hotel.nameFtsIndex, \$searchTerm) " +
-    "ORDER BY RANK(hotel.nameFtsIndex) DESC"
+    "SELECT META().id AS documentId, * FROM `inventory`.`hotel` AS hotel " +
+    "WHERE MATCH(nameFtsIndex, \$searchTerm) " +
+    "ORDER BY RANK(nameFtsIndex) DESC"
 ).also { it.parameters = Parameters().apply { setString("searchTerm", "$term*") } }
 ```
 

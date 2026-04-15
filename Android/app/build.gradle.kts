@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-import java.util.Properties
-
 android {
     namespace = "com.couchbase.quickstart"
     compileSdk = 35
@@ -18,20 +16,6 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        val localProps = Properties().apply {
-            val f = rootProject.file("local.properties")
-            if (f.exists()) {
-                f.inputStream().use { load(it) }
-            }
-        }
-        val capellaEndpointUrl = localProps.getProperty("capellaEndpointUrl", "")
-        val capellaUsername = localProps.getProperty("capellaUsername", "")
-        val capellaPassword = localProps.getProperty("capellaPassword", "")
-
-        buildConfigField("String", "CAPELLA_ENDPOINT_URL", "\"$capellaEndpointUrl\"")
-        buildConfigField("String", "CAPELLA_USERNAME", "\"$capellaUsername\"")
-        buildConfigField("String", "CAPELLA_PASSWORD", "\"$capellaPassword\"")
     }
 
     buildTypes {
@@ -52,7 +36,6 @@ android {
     }
     buildFeatures {
         compose = true
-        buildConfig = true
     }
     packaging {
         resources {
@@ -75,9 +58,6 @@ dependencies {
 
     // Couchbase Lite
     implementation("com.couchbase.lite:couchbase-lite-android-ktx:3.2.1")
-
-    // Gson for config parsing
-    implementation("com.google.code.gson:gson:2.10.1")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")

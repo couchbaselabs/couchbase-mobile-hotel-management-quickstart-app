@@ -1,10 +1,25 @@
+//
+// Copyright (c) 2025 Couchbase, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package com.couchbase.quickstart.ui.screens
 
 import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,14 +35,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -123,8 +136,8 @@ fun HotelFormScreen(
                 )
             }
 
-            // Details Section
-            FormSection(title = "Details") {
+            // Location Section
+            FormSection(title = "Location") {
                 FormTextField(
                     label = "Address",
                     value = hotel.address,
@@ -149,32 +162,16 @@ fun HotelFormScreen(
                     onValueChange = { viewModel.updateHotel { h -> h.copy(country = it) } },
                     semanticTag = "CountryFormTextField"
                 )
-                FormTextField(
-                    label = "Latitude",
-                    value = if (hotel.lat == 0.0) "" else hotel.lat.toString(),
-                    onValueChange = { viewModel.updateHotel { h -> h.copy(lat = it.toDoubleOrNull() ?: 0.0) } },
-                    keyboardType = KeyboardType.Decimal,
-                    semanticTag = "LatFormTextField"
-                )
-                FormTextField(
-                    label = "Longitude",
-                    value = if (hotel.lon == 0.0) "" else hotel.lon.toString(),
-                    onValueChange = { viewModel.updateHotel { h -> h.copy(lon = it.toDoubleOrNull() ?: 0.0) } },
-                    keyboardType = KeyboardType.Decimal,
-                    semanticTag = "LonFormTextField"
-                )
+            }
+
+            // Contact Section
+            FormSection(title = "Contact") {
                 FormTextField(
                     label = "Phone",
                     value = hotel.phone,
                     onValueChange = { viewModel.updateHotel { h -> h.copy(phone = it) } },
                     keyboardType = KeyboardType.Phone,
                     semanticTag = "PhoneFormTextField"
-                )
-                FormTextField(
-                    label = "Toll Free",
-                    value = hotel.tollfree,
-                    onValueChange = { viewModel.updateHotel { h -> h.copy(tollfree = it) } },
-                    semanticTag = "TollfreeFormTextField"
                 )
                 FormTextField(
                     label = "Email",
@@ -184,69 +181,11 @@ fun HotelFormScreen(
                     semanticTag = "EmailFormTextField"
                 )
                 FormTextField(
-                    label = "Fax",
-                    value = hotel.fax,
-                    onValueChange = { viewModel.updateHotel { h -> h.copy(fax = it) } },
-                    semanticTag = "FaxFormTextField"
-                )
-                FormTextField(
                     label = "Website",
                     value = hotel.url,
                     onValueChange = { viewModel.updateHotel { h -> h.copy(url = it) } },
                     keyboardType = KeyboardType.Uri,
                     semanticTag = "UrlFormTextField"
-                )
-                FormTextField(
-                    label = "Check-in",
-                    value = hotel.checkin,
-                    onValueChange = { viewModel.updateHotel { h -> h.copy(checkin = it) } },
-                    semanticTag = "CheckinFormTextField"
-                )
-                FormTextField(
-                    label = "Check-out",
-                    value = hotel.checkout,
-                    onValueChange = { viewModel.updateHotel { h -> h.copy(checkout = it) } },
-                    semanticTag = "CheckoutFormTextField"
-                )
-                FormTextField(
-                    label = "Price",
-                    value = hotel.price,
-                    onValueChange = { viewModel.updateHotel { h -> h.copy(price = it) } },
-                    semanticTag = "PriceFormTextField"
-                )
-            }
-
-            // Amenities Section
-            FormSection(title = "Amenities") {
-                FormToggle(
-                    label = "Vacancy",
-                    checked = hotel.vacancy,
-                    onCheckedChange = { viewModel.updateHotel { h -> h.copy(vacancy = it) } },
-                    semanticTag = "VacancyFormToggle"
-                )
-                FormToggle(
-                    label = "Pets OK",
-                    checked = hotel.petsOk,
-                    onCheckedChange = { viewModel.updateHotel { h -> h.copy(petsOk = it) } },
-                    semanticTag = "PetsFormToggle"
-                )
-                FormToggle(
-                    label = "Free Breakfast",
-                    checked = hotel.freeBreakfast,
-                    onCheckedChange = { viewModel.updateHotel { h -> h.copy(freeBreakfast = it) } },
-                    semanticTag = "FreeBreakfastFormToggle"
-                )
-                FormToggle(
-                    label = "Free Internet",
-                    checked = hotel.freeInternet,
-                    onCheckedChange = { viewModel.updateHotel { h -> h.copy(freeInternet = it) } },
-                    semanticTag = "FreeInternetFormToggle"
-                )
-                FormToggle(
-                    label = "Free Parking",
-                    checked = hotel.freeParking,
-                    onCheckedChange = { viewModel.updateHotel { h -> h.copy(freeParking = it) } },
-                    semanticTag = "FreeParkingFormToggle"
                 )
             }
         }
@@ -293,31 +232,3 @@ private fun FormTextField(
     )
 }
 
-@Composable
-private fun FormToggle(
-    label: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    semanticTag: String = ""
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (semanticTag.isNotBlank())
-                    Modifier.semantics { contentDescription = semanticTag }
-                else Modifier
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.align(Alignment.CenterVertically)
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange
-        )
-    }
-}

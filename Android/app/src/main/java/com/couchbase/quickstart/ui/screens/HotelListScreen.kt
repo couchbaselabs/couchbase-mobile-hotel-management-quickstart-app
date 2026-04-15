@@ -1,3 +1,19 @@
+//
+// Copyright (c) 2025 Couchbase, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package com.couchbase.quickstart.ui.screens
 
 import androidx.compose.foundation.clickable
@@ -43,17 +59,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.couchbase.quickstart.QuickstartApp
 import com.couchbase.quickstart.data.model.Hotel
 import com.couchbase.quickstart.error.ErrorManager
 import com.couchbase.quickstart.ui.components.ErrorDialog
-import com.couchbase.quickstart.ui.components.NetworkNotificationBanner
 import com.couchbase.quickstart.ui.viewmodels.HotelListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,11 +80,8 @@ fun HotelListScreen(
     val descending by viewModel.descendingList.collectAsState()
     val searchText by viewModel.searchText.collectAsState()
     val showDeleteAlert by viewModel.showDeleteAlert.collectAsState()
+    val replicatorStatus by viewModel.replicatorStatus.collectAsState()
     val errors by ErrorManager.errors.collectAsState()
-
-    val context = LocalContext.current
-    val app = context.applicationContext as QuickstartApp
-    val isConnected by app.networkMonitor.isConnected.collectAsState()
 
     var showSearch by remember { mutableStateOf(false) }
     var hotelToEdit by remember { mutableStateOf<Hotel?>(null) }
@@ -79,7 +89,16 @@ fun HotelListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Hotels") },
+                title = {
+                    Column {
+                        Text("Hotels")
+                        Text(
+                            text = "Sync: ${replicatorStatus.lowercase().replaceFirstChar { it.uppercase() }}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
                 actions = {
                     IconButton(onClick = { showSearch = !showSearch }) {
                         Icon(Icons.Default.Search, contentDescription = "Search")
@@ -101,8 +120,6 @@ fun HotelListScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
-            NetworkNotificationBanner(isConnected = isConnected)
-
             if (showSearch) {
                 OutlinedTextField(
                     value = searchText,
@@ -129,7 +146,7 @@ fun HotelListScreen(
                 }
                 else -> {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
-                        items(hotels!!, key = { it.id }) { hotel ->
+                        items(hotels!!, key = { it.documentId ?: it.hashCode() }) { hotel ->
                             HotelListItem(
                                 hotel = hotel,
                                 onClick = { onHotelClick(hotel) },
@@ -245,19 +262,20 @@ private fun HotelListItem(
             ListItem(
                 headlineContent = {
                     Text(
-                        text = hotel.name ?: hotel.title,
+                        text = hotel.name.ifBlank { hotel.title },
                         fontWeight = FontWeight.Bold
                     )
                 },
                 supportingContent = {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        val location = listOfNotNull(hotel.address, hotel.city, hotel.country)
+                        val location = listOf(hotel.address, hotel.city, hotel.country)
+                            .filter { it.isNotBlank() }
                             .joinToString(", ")
                         if (location.isNotBlank()) {
                             Text(location, style = MaterialTheme.typography.bodySmall)
                         }
-                        hotel.phone?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall)
+                        if (hotel.phone.isNotBlank()) {
+                            Text(hotel.phone, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

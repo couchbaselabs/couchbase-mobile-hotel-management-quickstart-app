@@ -1,3 +1,19 @@
+//
+// Copyright (c) 2025 Couchbase, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package com.couchbase.quickstart.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +53,7 @@ fun HotelDetailsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(hotel.name ?: hotel.title) },
+                title = { Text(hotel.name.ifBlank { hotel.title }) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -60,57 +76,24 @@ fun HotelDetailsScreen(
         ) {
             // Info Section
             DetailSection(title = "Info") {
-                hotel.name?.let { DetailRow("Name", it) }
-                DetailRow("Title", hotel.title)
+                if (hotel.name.isNotBlank()) DetailRow("Name", hotel.name)
+                if (hotel.title.isNotBlank()) DetailRow("Title", hotel.title)
                 if (hotel.description.isNotBlank()) DetailRow("Description", hotel.description)
             }
 
             // Address Section
             DetailSection(title = "Address") {
-                hotel.address?.let { DetailRow("Address", it) }
-                hotel.city?.let { DetailRow("City", it) }
-                hotel.state?.let { DetailRow("State", it) }
+                if (hotel.address.isNotBlank()) DetailRow("Address", hotel.address)
+                if (hotel.city.isNotBlank()) DetailRow("City", hotel.city)
+                if (hotel.state.isNotBlank()) DetailRow("State", hotel.state)
                 if (hotel.country.isNotBlank()) DetailRow("Country", hotel.country)
-                if (hotel.geo.lat != 0.0 || hotel.geo.lon != 0.0) {
-                    DetailRow("Coordinates", "${hotel.geo.lat}, ${hotel.geo.lon}")
-                }
             }
 
             // Contact Section
             DetailSection(title = "Contact") {
-                hotel.phone?.let { DetailRow("Phone", it) }
-                hotel.tollfree?.let { DetailRow("Toll Free", it) }
-                hotel.fax?.let { DetailRow("Fax", it) }
-                hotel.email?.let { DetailRow("Email", it) }
-                hotel.url?.let { DetailRow("Website", it) }
-                hotel.checkin?.let { DetailRow("Check-in", it) }
-                hotel.checkout?.let { DetailRow("Check-out", it) }
-                hotel.price?.let { DetailRow("Price", it) }
-            }
-
-            // Amenities Section
-            DetailSection(title = "Amenities") {
-                DetailRow("Vacancy", if (hotel.vacancy) "Yes" else "No")
-                DetailRow("Pets OK", if (hotel.petsOk) "Yes" else "No")
-                DetailRow("Free Breakfast", if (hotel.freeBreakfast) "Yes" else "No")
-                DetailRow("Free Internet", if (hotel.freeInternet) "Yes" else "No")
-                DetailRow("Free Parking", if (hotel.freeParking) "Yes" else "No")
-            }
-
-            // Reviews Section
-            if (hotel.reviews.isNotEmpty()) {
-                DetailSection(title = "Reviews") {
-                    hotel.reviews.forEach { review ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(review.author, fontWeight = FontWeight.Bold)
-                                Text(review.date, style = MaterialTheme.typography.bodySmall)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(review.content)
-                            }
-                        }
-                    }
-                }
+                if (hotel.phone.isNotBlank()) DetailRow("Phone", hotel.phone)
+                if (hotel.email.isNotBlank()) DetailRow("Email", hotel.email)
+                if (hotel.url.isNotBlank()) DetailRow("Website", hotel.url)
             }
         }
     }

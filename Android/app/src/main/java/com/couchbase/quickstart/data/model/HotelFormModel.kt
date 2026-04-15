@@ -1,101 +1,59 @@
+//
+// Copyright (c) 2025 Couchbase, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package com.couchbase.quickstart.data.model
 
 data class HotelFormModel(
-    var title: String = "",
+    var documentId: String? = null,
     var name: String = "",
+    var title: String = "",
+    var description: String = "",
     var address: String = "",
-    var directions: String = "",
-    var phone: String = "",
-    var tollfree: String = "",
-    var email: String = "",
-    var fax: String = "",
-    var url: String = "",
-    var checkin: String = "",
-    var checkout: String = "",
-    var price: String = "",
-    var lat: Double = 0.0,
-    var lon: Double = 0.0,
-    var geoAccuracy: String = "",
-    var type: String = "hotel",
-    var id: Int = (1..Int.MAX_VALUE).random(),
-    var country: String = "",
     var city: String = "",
     var state: String = "",
-    var reviews: List<ReviewFormModel> = emptyList(),
-    var publicLikes: List<String> = emptyList(),
-    var vacancy: Boolean = false,
-    var description: String = "",
-    var alias: String = "",
-    var petsOk: Boolean = false,
-    var freeBreakfast: Boolean = false,
-    var freeInternet: Boolean = false,
-    var freeParking: Boolean = false
+    var country: String = "",
+    var phone: String = "",
+    var email: String = "",
+    var url: String = ""
 ) {
     constructor(hotel: Hotel) : this(
+        documentId = hotel.documentId,
+        name = hotel.name,
         title = hotel.title,
-        name = hotel.name ?: "",
-        address = hotel.address ?: "",
-        directions = "",
-        phone = hotel.phone ?: "",
-        tollfree = hotel.tollfree ?: "",
-        email = hotel.email ?: "",
-        fax = hotel.fax ?: "",
-        url = hotel.url ?: "",
-        checkin = hotel.checkin ?: "",
-        checkout = hotel.checkout ?: "",
-        price = hotel.price ?: "",
-        lat = hotel.geo.lat,
-        lon = hotel.geo.lon,
-        geoAccuracy = hotel.geo.accuracy,
-        type = hotel.type,
-        id = hotel.id,
-        country = hotel.country,
-        city = hotel.city ?: "",
-        state = hotel.state ?: "",
-        reviews = hotel.reviews.map { ReviewFormModel(it.content, it.ratings, it.author, it.date) },
-        publicLikes = hotel.publicLikes,
-        vacancy = hotel.vacancy,
         description = hotel.description,
-        alias = hotel.alias ?: "",
-        petsOk = hotel.petsOk,
-        freeBreakfast = hotel.freeBreakfast,
-        freeInternet = hotel.freeInternet,
-        freeParking = hotel.freeParking
+        address = hotel.address,
+        city = hotel.city,
+        state = hotel.state,
+        country = hotel.country,
+        phone = hotel.phone,
+        email = hotel.email,
+        url = hotel.url
     )
 
     fun toHotel(): Hotel = Hotel(
+        documentId = documentId,
+        name = name,
         title = title,
-        name = name.ifBlank { null },
         description = description,
-        address = address.ifBlank { null },
-        city = city.ifBlank { null },
-        state = state.ifBlank { null },
+        address = address,
+        city = city,
+        state = state,
         country = country,
-        phone = phone.ifBlank { null },
-        tollfree = tollfree.ifBlank { null },
-        email = email.ifBlank { null },
-        fax = fax.ifBlank { null },
-        url = url.ifBlank { null },
-        checkin = checkin.ifBlank { null },
-        checkout = checkout.ifBlank { null },
-        price = price.ifBlank { null },
-        geo = Geo(lat, lon, geoAccuracy),
-        vacancy = vacancy,
-        petsOk = petsOk,
-        freeBreakfast = freeBreakfast,
-        freeInternet = freeInternet,
-        freeParking = freeParking,
-        type = type,
-        id = id,
-        reviews = reviews.map { Review(it.content, it.ratings, it.author, it.date) },
-        publicLikes = publicLikes,
-        alias = alias.ifBlank { null }
+        phone = phone,
+        email = email,
+        url = url
     )
 }
-
-data class ReviewFormModel(
-    val content: String = "",
-    val ratings: Map<String, Double> = emptyMap(),
-    val author: String = "",
-    val date: String = ""
-)

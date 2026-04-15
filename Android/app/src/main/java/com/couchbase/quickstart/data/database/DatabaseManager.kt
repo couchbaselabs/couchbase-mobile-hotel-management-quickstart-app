@@ -1,3 +1,19 @@
+//
+// Copyright (c) 2025 Couchbase, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package com.couchbase.quickstart.data.database
 
 import android.content.Context
@@ -5,23 +21,21 @@ import com.couchbase.lite.BasicAuthenticator
 import com.couchbase.lite.Collection
 import com.couchbase.lite.CouchbaseLite
 import com.couchbase.lite.Database
-import com.couchbase.lite.FullTextIndexItem
-import com.couchbase.lite.IndexBuilder
+import com.couchbase.lite.FullTextIndexConfiguration
 import com.couchbase.lite.ListenerToken
-import com.couchbase.lite.MutableArray
-import com.couchbase.lite.MutableDictionary
+import com.couchbase.lite.LogDomain
+import com.couchbase.lite.LogLevel
 import com.couchbase.lite.MutableDocument
 import com.couchbase.lite.Parameters
 import com.couchbase.lite.Query
 import com.couchbase.lite.Replicator
-import com.couchbase.lite.ReplicatorConfiguration
+import com.couchbase.lite.ReplicatorConfigurationFactory
 import com.couchbase.lite.ReplicatorType
 import com.couchbase.lite.Result
 import com.couchbase.lite.URLEndpoint
+import com.couchbase.lite.newConfig
 import com.couchbase.quickstart.configuration.ConfigurationManager
-import com.couchbase.quickstart.data.model.Geo
 import com.couchbase.quickstart.data.model.Hotel
-import com.couchbase.quickstart.data.model.Review
 import com.couchbase.quickstart.error.ErrorManager
 import com.couchbase.quickstart.error.ErrorModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,12 +44,13 @@ import kotlinx.coroutines.flow.asStateFlow
 
 interface DatabaseManaging {
     val queryUpdates: StateFlow<List<Hotel>>
+    val replicatorStatus: StateFlow<String>
 
     fun initialize(descending: Boolean = true, textSearch: String = "")
-    fun queryElements(descending: Boolean, textSearch: String)
-    fun addNewElement(hotel: Hotel)
-    fun updateExistingElement(hotel: Hotel)
-    fun deleteElement(hotel: Hotel)
+    fun queryHotels(descending: Boolean, textSearch: String)
+    fun addHotel(hotel: Hotel)
+    fun updateHotel(hotel: Hotel)
+    fun deleteHotel(hotel: Hotel)
 }
 
 object DatabaseManagerProvider {
@@ -54,6 +69,9 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
     private val _queryUpdates = MutableStateFlow<List<Hotel>>(emptyList())
     override val queryUpdates: StateFlow<List<Hotel>> = _queryUpdates.asStateFlow()
 
+    private val _replicatorStatus = MutableStateFlow("Stopped")
+    override val replicatorStatus: StateFlow<String> = _replicatorStatus.asStateFlow()
+
     companion object {
         @Volatile
         private var instance: DatabaseManager? = null
@@ -70,9 +88,12 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
         private const val FTS_INDEX_NAME = "nameFtsIndex"
     }
 
+    // Initializes the Couchbase Lite SDK, opens the database, creates the collection,
+    // sets up the full-text index, configures replication, and starts the live query.
     override fun initialize(descending: Boolean, textSearch: String) {
         try {
             CouchbaseLite.init(appContext)
+            enableLogging()
             database = Database(DATABASE_NAME)
             collection = database!!.createCollection(COLLECTION_NAME, SCOPE_NAME)
 
@@ -86,17 +107,25 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
         }
     }
 
+    // Enables verbose console logging for Couchbase Lite to aid debugging.
+    private fun enableLogging() {
+        Database.log.console.domains = LogDomain.ALL_DOMAINS
+        Database.log.console.level = LogLevel.VERBOSE
+    }
+
+    // Creates a full-text search index on the hotel "name" property using FullTextIndexConfiguration.
     private fun createFtsIndex() {
         try {
             val col = collection ?: return
-            val ftsIndex = IndexBuilder.fullTextIndex(FullTextIndexItem.property("name"))
-                .ignoreAccents(false)
+            val ftsIndex = FullTextIndexConfiguration("name").ignoreAccents(false)
             col.createIndex(FTS_INDEX_NAME, ftsIndex)
         } catch (e: Exception) {
             // Index may already exist
         }
     }
 
+    // Configures and starts a continuous push-and-pull replicator with Capella App Services.
+    // Listens for replicator status changes and surfaces them via replicatorStatus flow.
     private fun setupReplication() {
         try {
             val config = ConfigurationManager(appContext).loadConfiguration()
@@ -105,14 +134,26 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
             val col = collection ?: return
 
             val targetEndpoint = URLEndpoint(java.net.URI(config.capellaEndpointUrl))
-            val replConfig = ReplicatorConfiguration(targetEndpoint).apply {
-                addCollection(col, null)
-                type = ReplicatorType.PUSH_AND_PULL
-                isContinuous = true
+            val replConfig = ReplicatorConfigurationFactory.newConfig(
+                target = targetEndpoint,
+                collections = mapOf(listOf(col) to null),
+                type = ReplicatorType.PUSH_AND_PULL,
+                continuous = true,
                 authenticator = BasicAuthenticator(config.username, config.password.toCharArray())
-            }
+            )
 
-            replicator = Replicator(replConfig).apply { start() }
+            replicator = Replicator(replConfig).apply {
+                // Listen for replicator status changes and update the status flow.
+                addChangeListener { change ->
+                    _replicatorStatus.value = change.status.activityLevel.name
+                    change.status.error?.let { error ->
+                        ErrorManager.showError(
+                            ErrorModel("Sync Error", "Replication error: ${error.message}")
+                        )
+                    }
+                }
+                start()
+            }
         } catch (e: Exception) {
             ErrorManager.showError(
                 ErrorModel("Sync Error", "Failed to setup replication: ${e.message}")
@@ -120,6 +161,8 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
         }
     }
 
+    // Sets up a live SQL++ query that listens for changes to hotel documents.
+    // The query includes META().id so each Hotel carries its document ID.
     private fun setupLiveQuery(descending: Boolean, textSearch: String) {
         try {
             val db = database ?: return
@@ -130,7 +173,7 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
             val query: Query = if (textSearch.isNotBlank()) {
                 val pattern = "$textSearch*"
                 db.createQuery(
-                    "SELECT * FROM `$SCOPE_NAME`.`$COLLECTION_NAME` AS hotel " +
+                    "SELECT META().id AS documentId, * FROM `$SCOPE_NAME`.`$COLLECTION_NAME` AS hotel " +
                     "WHERE MATCH($FTS_INDEX_NAME, \$searchTerm) " +
                     "ORDER BY RANK($FTS_INDEX_NAME) $sortOrder"
                 ).also {
@@ -138,7 +181,7 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
                 }
             } else {
                 db.createQuery(
-                    "SELECT * FROM `$SCOPE_NAME`.`$COLLECTION_NAME` AS hotel " +
+                    "SELECT META().id AS documentId, * FROM `$SCOPE_NAME`.`$COLLECTION_NAME` AS hotel " +
                     "ORDER BY hotel.name $sortOrder"
                 )
             }
@@ -158,54 +201,27 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
         }
     }
 
-    override fun queryElements(descending: Boolean, textSearch: String) {
+    // Re-runs the live query with updated sort order or search text.
+    override fun queryHotels(descending: Boolean, textSearch: String) {
         setupLiveQuery(descending, textSearch)
     }
 
-    override fun addNewElement(hotel: Hotel) {
+    // Creates and saves a new hotel document to the collection.
+    override fun addHotel(hotel: Hotel) {
         try {
             val col = collection ?: return
             val doc = MutableDocument().apply {
-                setString("type", hotel.type)
-                setInt("id", hotel.id)
-                setString("title", hotel.title)
+                setString("type", "hotel")
                 setString("name", hotel.name)
+                setString("title", hotel.title)
                 setString("description", hotel.description)
                 setString("address", hotel.address)
                 setString("city", hotel.city)
                 setString("state", hotel.state)
                 setString("country", hotel.country)
                 setString("phone", hotel.phone)
-                setString("tollfree", hotel.tollfree)
                 setString("email", hotel.email)
-                setString("fax", hotel.fax)
                 setString("url", hotel.url)
-                setString("checkin", hotel.checkin)
-                setString("checkout", hotel.checkout)
-                setString("price", hotel.price)
-                setBoolean("vacancy", hotel.vacancy)
-                setBoolean("pets_ok", hotel.petsOk)
-                setBoolean("free_breakfast", hotel.freeBreakfast)
-                setBoolean("free_internet", hotel.freeInternet)
-                setBoolean("free_parking", hotel.freeParking)
-                setString("alias", hotel.alias)
-                setDictionary("geo", MutableDictionary().apply {
-                    setDouble("lat", hotel.geo.lat)
-                    setDouble("lon", hotel.geo.lon)
-                    setString("accuracy", hotel.geo.accuracy)
-                })
-                setArray("reviews", MutableArray().apply {
-                    hotel.reviews.forEach { review ->
-                        addDictionary(MutableDictionary().apply {
-                            setString("content", review.content)
-                            setString("author", review.author)
-                            setString("date", review.date)
-                        })
-                    }
-                })
-                setArray("public_likes", MutableArray().apply {
-                    hotel.publicLikes.forEach { addString(it) }
-                })
             }
             col.save(doc)
         } catch (e: Exception) {
@@ -215,51 +231,27 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
         }
     }
 
-    override fun updateExistingElement(hotel: Hotel) {
+    // Updates an existing hotel document using its document ID.
+    // Falls back to addHotel() if the document ID is not available.
+    override fun updateHotel(hotel: Hotel) {
         try {
             val col = collection ?: return
-            val db = database ?: return
-
-            val query = db.createQuery(
-                "SELECT META().id FROM `$SCOPE_NAME`.`$COLLECTION_NAME` AS hotel WHERE hotel.id = \$hotelId"
-            ).also {
-                it.parameters = Parameters().apply { setInt("hotelId", hotel.id) }
-            }
-
-            val result = query.execute().allResults().firstOrNull() ?: run {
-                addNewElement(hotel)
+            val docId = hotel.documentId ?: run {
+                addHotel(hotel)
                 return
             }
-
-            val docId = result.getString("id") ?: return
             val existingDoc = col.getDocument(docId) ?: return
             val mutableDoc = existingDoc.toMutable().apply {
-                setString("title", hotel.title)
                 setString("name", hotel.name)
+                setString("title", hotel.title)
                 setString("description", hotel.description)
                 setString("address", hotel.address)
                 setString("city", hotel.city)
                 setString("state", hotel.state)
                 setString("country", hotel.country)
                 setString("phone", hotel.phone)
-                setString("tollfree", hotel.tollfree)
                 setString("email", hotel.email)
-                setString("fax", hotel.fax)
                 setString("url", hotel.url)
-                setString("checkin", hotel.checkin)
-                setString("checkout", hotel.checkout)
-                setString("price", hotel.price)
-                setBoolean("vacancy", hotel.vacancy)
-                setBoolean("pets_ok", hotel.petsOk)
-                setBoolean("free_breakfast", hotel.freeBreakfast)
-                setBoolean("free_internet", hotel.freeInternet)
-                setBoolean("free_parking", hotel.freeParking)
-                setString("alias", hotel.alias)
-                setDictionary("geo", MutableDictionary().apply {
-                    setDouble("lat", hotel.geo.lat)
-                    setDouble("lon", hotel.geo.lon)
-                    setString("accuracy", hotel.geo.accuracy)
-                })
             }
             col.save(mutableDoc)
         } catch (e: Exception) {
@@ -269,21 +261,12 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
         }
     }
 
-    override fun deleteElement(hotel: Hotel) {
+    // Deletes a hotel document using its document ID.
+    override fun deleteHotel(hotel: Hotel) {
         try {
             val col = collection ?: return
-            val db = database ?: return
-
-            val query = db.createQuery(
-                "SELECT META().id FROM `$SCOPE_NAME`.`$COLLECTION_NAME` AS hotel WHERE hotel.id = \$hotelId"
-            ).also {
-                it.parameters = Parameters().apply { setInt("hotelId", hotel.id) }
-            }
-
-            query.execute().allResults().forEach { result ->
-                val docId = result.getString("id") ?: return@forEach
-                col.getDocument(docId)?.let { doc -> col.delete(doc) }
-            }
+            val docId = hotel.documentId ?: return
+            col.getDocument(docId)?.let { doc -> col.delete(doc) }
         } catch (e: Exception) {
             ErrorManager.showError(
                 ErrorModel("Delete Error", "Failed to delete hotel: ${e.message}")
@@ -291,82 +274,31 @@ class DatabaseManager private constructor(context: Context) : DatabaseManaging {
         }
     }
 
-    fun deleteElementWithName(name: String) {
-        try {
-            val col = collection ?: return
-            val db = database ?: return
-
-            val query = db.createQuery(
-                "SELECT META().id FROM `$SCOPE_NAME`.`$COLLECTION_NAME` AS hotel WHERE hotel.name = \$name"
-            ).also {
-                it.parameters = Parameters().apply { setString("name", name) }
-            }
-
-            query.execute().allResults().forEach { result ->
-                val docId = result.getString("id") ?: return@forEach
-                col.getDocument(docId)?.let { doc -> col.delete(doc) }
-            }
-        } catch (e: Exception) {
-            ErrorManager.showError(
-                ErrorModel("Delete Error", "Failed to delete hotel: ${e.message}")
-            )
-        }
-    }
-
+    // Converts a query result row into a Hotel object, including the document ID.
     private fun resultToHotel(result: Result): Hotel? {
         return try {
+            val documentId = result.getString("documentId")
             val hotelDict = result.getDictionary("hotel") ?: return null
-            val geoDict = hotelDict.getDictionary("geo")
-            val reviewsArray = hotelDict.getArray("reviews")
-            val publicLikesArray = hotelDict.getArray("public_likes")
 
             Hotel(
+                documentId = documentId,
+                name = hotelDict.getString("name") ?: "",
                 title = hotelDict.getString("title") ?: "",
-                name = hotelDict.getString("name"),
                 description = hotelDict.getString("description") ?: "",
-                address = hotelDict.getString("address"),
-                city = hotelDict.getString("city"),
-                state = hotelDict.getString("state"),
+                address = hotelDict.getString("address") ?: "",
+                city = hotelDict.getString("city") ?: "",
+                state = hotelDict.getString("state") ?: "",
                 country = hotelDict.getString("country") ?: "",
-                phone = hotelDict.getString("phone"),
-                tollfree = hotelDict.getString("tollfree"),
-                email = hotelDict.getString("email"),
-                fax = hotelDict.getString("fax"),
-                url = hotelDict.getString("url"),
-                checkin = hotelDict.getString("checkin"),
-                checkout = hotelDict.getString("checkout"),
-                price = hotelDict.getString("price"),
-                geo = Geo(
-                    lat = geoDict?.getDouble("lat") ?: 0.0,
-                    lon = geoDict?.getDouble("lon") ?: 0.0,
-                    accuracy = geoDict?.getString("accuracy") ?: ""
-                ),
-                vacancy = hotelDict.getBoolean("vacancy"),
-                petsOk = hotelDict.getBoolean("pets_ok"),
-                freeBreakfast = hotelDict.getBoolean("free_breakfast"),
-                freeInternet = hotelDict.getBoolean("free_internet"),
-                freeParking = hotelDict.getBoolean("free_parking"),
-                type = hotelDict.getString("type") ?: "hotel",
-                id = hotelDict.getInt("id"),
-                reviews = (0 until (reviewsArray?.count() ?: 0)).mapNotNull { i ->
-                    reviewsArray?.getDictionary(i)?.let { r ->
-                        Review(
-                            content = r.getString("content") ?: "",
-                            author = r.getString("author") ?: "",
-                            date = r.getString("date") ?: ""
-                        )
-                    }
-                },
-                publicLikes = (0 until (publicLikesArray?.count() ?: 0)).mapNotNull { i ->
-                    publicLikesArray?.getString(i)
-                },
-                alias = hotelDict.getString("alias")
+                phone = hotelDict.getString("phone") ?: "",
+                email = hotelDict.getString("email") ?: "",
+                url = hotelDict.getString("url") ?: ""
             )
         } catch (e: Exception) {
             null
         }
     }
 
+    // Stops the replicator, removes query listeners, and closes the database.
     fun close() {
         queryListenerToken?.remove()
         replicator?.stop()

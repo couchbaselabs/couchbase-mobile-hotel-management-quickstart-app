@@ -1,39 +1,40 @@
+//
+// Copyright (c) 2025 Couchbase, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package com.couchbase.quickstart.configuration
 
 import android.content.Context
-import com.couchbase.quickstart.BuildConfig
-import com.google.gson.Gson
-import java.io.InputStreamReader
+import org.json.JSONObject
 
 class ConfigurationManager(private val context: Context) {
 
-    private data class ConfigJson(
-        val capellaEndpointUrl: String = "",
-        val username: String = "",
-        val password: String = ""
-    )
-
+    // Loads the sync configuration from res/raw/config.json.
     fun loadConfiguration(): ConfigurationModel {
-        val endpoint = BuildConfig.CAPELLA_ENDPOINT_URL
-        val username = BuildConfig.CAPELLA_USERNAME
-        val password = BuildConfig.CAPELLA_PASSWORD
-        if (endpoint.isNotBlank() && username.isNotBlank() && password.isNotBlank()) {
-            return ConfigurationModel(
-                capellaEndpointUrl = endpoint,
-                username = username,
-                password = password
-            )
-        }
-
         val rawId = context.resources.getIdentifier("config", "raw", context.packageName)
         check(rawId != 0) { "config.json not found in res/raw" }
 
-        val inputStream = context.resources.openRawResource(rawId)
-        val config = Gson().fromJson(InputStreamReader(inputStream), ConfigJson::class.java)
+        val json = context.resources.openRawResource(rawId)
+            .bufferedReader()
+            .use { it.readText() }
+        val jsonObj = JSONObject(json)
+
         return ConfigurationModel(
-            capellaEndpointUrl = config.capellaEndpointUrl,
-            username = config.username,
-            password = config.password
+            capellaEndpointUrl = jsonObj.optString("capellaEndpointUrl", ""),
+            username = jsonObj.optString("username", ""),
+            password = jsonObj.optString("password", "")
         )
     }
 }

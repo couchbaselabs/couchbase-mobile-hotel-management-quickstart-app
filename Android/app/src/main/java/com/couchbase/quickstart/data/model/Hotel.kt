@@ -1,45 +1,31 @@
+//
+// Copyright (c) 2025 Couchbase, Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 package com.couchbase.quickstart.data.model
 
-import com.google.gson.annotations.SerializedName
-
 data class Hotel(
+    val documentId: String? = null,
+    val name: String = "",
     val title: String = "",
-    val name: String? = null,
     val description: String = "",
-    val address: String? = null,
-    val city: String? = null,
-    val state: String? = null,
+    val address: String = "",
+    val city: String = "",
+    val state: String = "",
     val country: String = "",
-    val phone: String? = null,
-    val tollfree: String? = null,
-    val email: String? = null,
-    val fax: String? = null,
-    val url: String? = null,
-    val checkin: String? = null,
-    val checkout: String? = null,
-    val price: String? = null,
-    val geo: Geo = Geo(),
-    val vacancy: Boolean = false,
-    @SerializedName("pets_ok") val petsOk: Boolean = false,
-    @SerializedName("free_breakfast") val freeBreakfast: Boolean = false,
-    @SerializedName("free_internet") val freeInternet: Boolean = false,
-    @SerializedName("free_parking") val freeParking: Boolean = false,
-    val type: String = "hotel",
-    val id: Int = 0,
-    val reviews: List<Review> = emptyList(),
-    @SerializedName("public_likes") val publicLikes: List<String> = emptyList(),
-    val alias: String? = null
-) : java.io.Serializable
-
-data class Geo(
-    val lat: Double = 0.0,
-    val lon: Double = 0.0,
-    val accuracy: String = ""
-) : java.io.Serializable
-
-data class Review(
-    val content: String = "",
-    val ratings: Map<String, Double> = emptyMap(),
-    val author: String = "",
-    val date: String = ""
+    val phone: String = "",
+    val email: String = "",
+    val url: String = ""
 ) : java.io.Serializable
