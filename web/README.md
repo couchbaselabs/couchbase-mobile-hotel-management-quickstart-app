@@ -196,7 +196,7 @@ The app queries the local database using SQL++ syntax. A collection change liste
 
 ```js
 const query = this.database.createQuery(
-  'SELECT *, META().id AS _docId FROM `inventory.hotel` AS hotel ORDER BY hotel.name ASC'
+  'SELECT *, META().id AS docId FROM `inventory.hotel` AS hotel ORDER BY hotel.name ASC'
 );
 const results = await query.execute();
 

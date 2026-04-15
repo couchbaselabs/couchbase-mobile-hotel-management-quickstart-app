@@ -4,11 +4,11 @@
  * Provides Edit and Delete actions.
  */
 
-import type { Hotel } from '../model/HotelRepository';
+import type { HotelWithId } from '../model/HotelRepository';
 
 interface HotelCardProps {
-  hotel: Hotel;
-  onEdit: (hotel: Hotel) => void;
+  hotel: HotelWithId;
+  onEdit: (hotel: HotelWithId) => void;
   onDelete: (docId: string) => void;
 }
 
@@ -29,7 +29,7 @@ export default function HotelCard({ hotel, onEdit, onDelete }: HotelCardProps) {
       </div>
       <div className="hotel-card-actions">
         <button
-          id={`edit-hotel-${hotel._docId}`}
+          id={`edit-hotel-${hotel.docId}`}
           className="btn btn-secondary"
           onClick={() => onEdit(hotel)}
           aria-label={`Edit ${hotel.name}`}
@@ -37,7 +37,7 @@ export default function HotelCard({ hotel, onEdit, onDelete }: HotelCardProps) {
           Edit
         </button>
         <button
-          id={`delete-hotel-${hotel._docId}`}
+          id={`delete-hotel-${hotel.docId}`}
           className="btn btn-danger"
           onClick={() => onDelete(hotel.docId)}
           aria-label={`Delete ${hotel.name}`}

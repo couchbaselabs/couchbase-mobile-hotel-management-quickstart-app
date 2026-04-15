@@ -71,7 +71,8 @@ describe('DatabaseManager', () => {
       password: 'secret',
     };
     const replicator = await manager.setupReplication(cfg) as Replicator;
-    await manager.startReplication(replicator, cfg);
+    await replicator.run();
+    console.log('Replication started →', cfg.capellaEndpointUrl);
 
     expect(Replicator).toHaveBeenCalledWith(
       expect.objectContaining({

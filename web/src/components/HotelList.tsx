@@ -5,12 +5,12 @@
 
 
 import HotelCard from './HotelCard';
-import type { Hotel } from '../model/HotelRepository';
+import type { HotelWithId } from '../model/HotelRepository';
 
 interface HotelListProps {
-  hotels: Hotel[];
+  hotels: HotelWithId[];
   loading: boolean;
-  onEdit: (hotel: Hotel) => void;
+  onEdit: (hotel: HotelWithId) => void;
   onDelete: (docId: string) => void;
 }
 

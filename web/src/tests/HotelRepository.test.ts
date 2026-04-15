@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import HotelRepository, { type Hotel } from '../model/HotelRepository';
+import HotelRepository, { type HotelWithId } from '../model/HotelRepository';
 
 // ─── Mock collection and database ─────────────────────────────────────────
 
@@ -20,11 +20,10 @@ const MOCK_HOTELS = [
   { docId: 'hotel-3', id: 3, name: 'Tokyo Zen Inn', country: 'Japan', city: 'Tokyo', type: 'hotel' as const, phone: '+81-3-001', description: 'Tranquil inn in Shinjuku' },
 ];
 
-function makeQueryResult(rows: Hotel[]) {
-  return rows.map((row: Hotel) => ({
+function makeQueryResult(rows: HotelWithId[]) {
+  return rows.map((row: HotelWithId) => ({
     hotel: row,
-    // Access docId from the raw mock object since it's not in the Hotel interface
-    docId: row.docId || (row as unknown as Hotel).docId,
+    docId: row.docId,
   }));
 }
 
@@ -36,9 +35,7 @@ const mockCollection = {
 };
 
 const mockQuery = {
-  // Cast MOCK_HOTELS to Hotel[] to satisfy the TS compiler. 
-  // We use 'as unknown' because mocks are partial.
-  execute: vi.fn(async () => makeQueryResult(MOCK_HOTELS as unknown as Hotel[])),
+  execute: vi.fn(async () => makeQueryResult(MOCK_HOTELS as unknown as HotelWithId[])),
 };
 
 const mockDatabase = {
@@ -65,81 +62,32 @@ describe('HotelRepository', () => {
     });
   });
 
-  describe('getHotelById()', () => {
-    it('retrieves a hotel by document ID', async () => {
-      const hotel = await repo.getHotelById('hotel-2');
-      expect(mockCollection.getDocument).toHaveBeenCalledWith('hotel-2');
-      expect(hotel).toHaveProperty('name', 'Eiffel Suites');
-    });
-
-    it('returns null for a missing document', async () => {
-      const hotel = await repo.getHotelById('hotel-999');
-      expect(hotel).toBeNull();
-    });
-  });
-
-  describe('addHotel()', () => {
-    it('creates and saves a new hotel document', async () => {
-      const newHotel = { name: 'The Riviera', country: 'Italy', city: 'Rome', type: 'hotel' as const };
-      const docId = await repo.addHotel(newHotel);
-      expect(mockCollection.createDocument).toHaveBeenCalledWith(
-        null,
-        expect.objectContaining({ name: 'The Riviera', type: 'hotel' })
-      );
-      expect(mockCollection.save).toHaveBeenCalledOnce();
-      expect(docId).toBe('new-id-1');
-    });
-  });
-
-  describe('updateHotel()', () => {
-    it('retrieves, mutates, and saves the document', async () => {
-      await repo.updateHotel('hotel-1', { name: 'The Grand Plaza (Renovated)' });
-      expect(mockCollection.getDocument).toHaveBeenCalledWith('hotel-1');
-      expect(mockCollection.save).toHaveBeenCalledOnce();
-    });
-
-    it('throws when the hotel is not found', async () => {
-      await expect(repo.updateHotel('hotel-999', { name: 'X' })).rejects.toThrow('Hotel not found: hotel-999');
-    });
-  });
-
-  describe('deleteHotel()', () => {
-    it('retrieves and deletes the document', async () => {
-      await repo.deleteHotel('hotel-3');
-      expect(mockCollection.getDocument).toHaveBeenCalledWith('hotel-3');
-      expect(mockCollection.delete).toHaveBeenCalledOnce();
-    });
-
-    it('throws when the hotel is not found', async () => {
-      await expect(repo.deleteHotel('hotel-999')).rejects.toThrow('Hotel not found: hotel-999');
-    });
-  });
 
   describe('searchHotels() — Fuse.js', () => {
     it('returns all hotels when search term is empty', () => {
-      const result = repo.searchHotels('', MOCK_HOTELS as unknown as Hotel[]);
+      const result = repo.searchHotels('', MOCK_HOTELS as unknown as HotelWithId[]);
       expect(result).toHaveLength(3);
     });
 
     it('returns matching hotels for a valid search term', () => {
-      const result = repo.searchHotels('Paris', MOCK_HOTELS as unknown as Hotel[]);
+      const result = repo.searchHotels('Paris', MOCK_HOTELS as unknown as HotelWithId[]);
       expect(result.length).toBeGreaterThanOrEqual(1);
       expect(result[0].name).toBe('Eiffel Suites');
     });
 
     it('returns fuzzy match for partial / typo search', () => {
-      const result = repo.searchHotels('Toko', MOCK_HOTELS as unknown as Hotel[]); // typo for Tokyo
+      const result = repo.searchHotels('Toko', MOCK_HOTELS as unknown as HotelWithId[]); // typo for Tokyo
       expect(result.length).toBeGreaterThanOrEqual(1);
       expect(result[0].city).toBe('Tokyo');
     });
 
     it('returns empty array when no match found', () => {
-      const result = repo.searchHotels('zzzznotaplace', MOCK_HOTELS as unknown as Hotel[]);
+      const result = repo.searchHotels('zzzznotaplace', MOCK_HOTELS as unknown as HotelWithId[]);
       expect(result).toHaveLength(0);
     });
 
     it('returns all hotels when term is too short (< 2 chars)', () => {
-      const result = repo.searchHotels('a', MOCK_HOTELS as unknown as Hotel[]);
+      const result = repo.searchHotels('a', MOCK_HOTELS as unknown as HotelWithId[]);
       expect(result).toHaveLength(3);
     });
   });

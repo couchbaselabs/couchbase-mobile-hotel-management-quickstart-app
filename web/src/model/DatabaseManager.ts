@@ -11,7 +11,7 @@ import { Database, Replicator, Collection, type ListenerToken, type CollectionCh
 import type { Hotel } from './HotelRepository';
 
 const DB_NAME = 'travel-sample';
-const COLLECTION_NAME = 'inventory.hotel';
+export const COLLECTION_NAME = 'inventory.hotel';
 
 export interface SyncConfig {
   capellaEndpointUrl: string;
@@ -27,17 +27,17 @@ export interface AppSchema {
 
 
 class DatabaseManager {
-  database: Database<AppSchema> | null = null;
-  collection: Collection<Hotel> | null = null;
-  replicator: Replicator | null = null;
-  _changeListenerToken: ListenerToken | null = null;
+  database?: Database<AppSchema>;
+  collection?: Collection<Hotel>;
+  replicator?: Replicator;
+  _changeListenerToken?: ListenerToken;
 
   constructor() { }
 
   /**
    * Open (or create) the local Couchbase Lite database and obtain the hotel collection.
    */
-  async initialize() {
+  async initialize(): Promise<void> {
 
     // end::database-schema[]
 
@@ -57,9 +57,9 @@ class DatabaseManager {
 
   /**
    * Configure and start continuous bi-directional replication with Capella App Services.
-   * @param {SyncConfig} config
+   * @param config
    */
-  async setupReplication(config: SyncConfig) {
+  async setupReplication(config: SyncConfig): Promise<Replicator> {
     if (!this.database) throw new Error('Database not initialized.');
 
     const replicatorConfig: ReplicatorConfig = {
@@ -81,17 +81,12 @@ class DatabaseManager {
     return this.replicator;
   }
 
-  async startReplication(replicator: Replicator, config: SyncConfig) {
-    await replicator.run();
-    console.log('[DatabaseManager] Replication started →', config.capellaEndpointUrl);
-  }
-
 
   /**
    * Subscribe to collection changes (live updates).
-   * @param {(event: CollectionChange) => void} callback
+   * @param callback
    */
-  addChangeListener(callback: (event: CollectionChange) => void) {
+  addChangeListener(callback: (event: CollectionChange) => void): void {
     if (!this.collection) throw new Error('Collection not available.');
     this._changeListenerToken = this.collection.addChangeListener(callback);
   }
@@ -99,42 +94,40 @@ class DatabaseManager {
   /**
    * Remove the collection change listener.
    */
-  removeChangeListener() {
+  removeChangeListener(): void {
     if (this._changeListenerToken) {
       this._changeListenerToken.remove();
-      this._changeListenerToken = null;
+      this._changeListenerToken = undefined;
     }
   }
 
   /**
    * Return the hotel collection reference.
-   * @returns {Collection<Hotel> | null} Collection
    */
-  getCollection() {
+  getCollection(): Collection<Hotel> | undefined {
     return this.collection;
   }
 
   /**
    * Return the database instance.
-   * @returns {import('@couchbase/lite-js').Database|null}
    */
-  getDatabase() {
+  getDatabase(): Database<AppSchema> | undefined {
     return this.database;
   }
 
   /**
    * Close the database and stop replication cleanly.
    */
-  async close() {
+  async close(): Promise<void> {
     this.removeChangeListener();
     if (this.replicator) {
-      this.replicator.stop?.();
-      this.replicator = null;
+      this.replicator.stop();
+      this.replicator = undefined;
     }
     if (this.database) {
-      await this.database.close?.();
-      this.database = null;
-      this.collection = null;
+      await this.database.close();
+      this.database = undefined;
+      this.collection = undefined;
     }
     console.log('[DatabaseManager] Database closed.');
   }

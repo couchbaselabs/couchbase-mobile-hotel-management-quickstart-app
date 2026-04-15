@@ -12,25 +12,25 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { databaseManager } from './model/DatabaseManager';
-import HotelRepository, { type Hotel } from './model/HotelRepository';
+import HotelRepository, { type Hotel, type HotelWithId } from './model/HotelRepository';
 import HotelList from './components/HotelList';
 import SearchBar from './components/SearchBar';
 import HotelForm from './components/HotelForm';
 import SyncStatus from './components/SyncStatus';
-import type { Replicator, ReplicatorStatus } from '@couchbase/lite-js';
+import type { ReplicatorStatus, DocID } from '@couchbase/lite-js';
 
 
 export default function App() {
-  const [hotels, setHotels] = useState<Hotel[]>([]);
-  const [filteredHotels, setFilteredHotels] = useState<Hotel[]>([]);
+  const [hotels, setHotels] = useState<HotelWithId[]>([]);
+  const [filteredHotels, setFilteredHotels] = useState<HotelWithId[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'connecting' | 'syncing' | 'connected' | 'error'>('idle');
   const [showForm, setShowForm] = useState(false);
-  const [editingHotel, setEditingHotel] = useState<Hotel | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [editingHotel, setEditingHotel] = useState<HotelWithId>();
+  const [error, setError] = useState<string>();
 
-  const repoRef = useRef<HotelRepository | null>(null);
+  const repoRef = useRef<HotelRepository>(undefined);
 
   // ─── Initialization ───────────────────────────────────────────────────────
 
@@ -39,7 +39,9 @@ export default function App() {
 
     async function init() {
       try {
+        if (!mounted) return;
         await databaseManager.initialize();
+        if (!mounted) return;
         const repo = new HotelRepository(
           databaseManager.getDatabase()!,
           databaseManager.getCollection()!
@@ -64,9 +66,12 @@ export default function App() {
         try {
           const res = await fetch('/config.json');
           const cfg = await res.json();
+          if (!mounted) return;
+          
           if (cfg.capellaEndpointUrl && !cfg.capellaEndpointUrl.includes('your-endpoint')) {
             setSyncStatus('connecting');
             const replicator = await databaseManager.setupReplication(cfg);
+            if (!mounted) return;
             // Monitor replicator status changes
             replicator.onStatusChange = (status: ReplicatorStatus) => {
               const activity = status.status;
@@ -82,7 +87,8 @@ export default function App() {
             };
             setSyncStatus('connected');
 
-            databaseManager.startReplication(replicator, cfg);
+            replicator.run().catch(console.error);
+            console.log('[App] Replication started →', cfg.capellaEndpointUrl);
           }
         } catch (e) {
           console.error(e);
@@ -122,10 +128,22 @@ export default function App() {
     const repo = repoRef.current;
     if (!repo) return;
     try {
+      const collection = databaseManager.getCollection();
+      if (!collection) throw new Error("Collection not available");
+
       if (editingHotel) {
-        await repo.updateHotel(editingHotel.docId, formData);
+        const doc = await collection.getDocument(editingHotel.docId as DocID);
+        if (!doc) throw new Error(`Hotel not found: ${editingHotel.docId}`);
+        Object.assign(doc, formData);
+        await collection.save(doc);
+        console.log('[App] Hotel updated:', editingHotel.docId);
       } else {
-        await repo.addHotel(formData);
+        const doc = collection.createDocument(null, {
+          type: 'hotel',
+          ...formData,
+        } as Hotel);
+        await collection.save(doc);
+        console.log('[App] Hotel added:', formData.name);
       }
       // Refresh list; change listener may also trigger this
       const all = await repo.getAllHotels();
@@ -135,11 +153,11 @@ export default function App() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setShowForm(false);
-      setEditingHotel(null);
+      setEditingHotel(undefined);
     }
   }, [editingHotel]);
 
-  const handleEdit = useCallback((hotel: Hotel) => {
+  const handleEdit = useCallback((hotel: HotelWithId) => {
     setEditingHotel(hotel);
     setShowForm(true);
   }, []);
@@ -149,7 +167,12 @@ export default function App() {
     if (!repo) return;
     if (!window.confirm('Delete this hotel?')) return;
     try {
-      await repo.deleteHotel(docId);
+      const collection = databaseManager.getCollection();
+      if (!collection) throw new Error("Collection not available");
+      const doc = await collection.getDocument(docId as DocID);
+      if (!doc) throw new Error(`Hotel not found: ${docId}`);
+      await collection.delete(doc);
+      console.log('[App] Hotel deleted:', docId);
       const all = await repo.getAllHotels();
       setHotels(all);
     } catch (err) {
@@ -160,7 +183,7 @@ export default function App() {
 
   const handleCancelForm = useCallback(() => {
     setShowForm(false);
-    setEditingHotel(null);
+    setEditingHotel(undefined);
   }, []);
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -183,7 +206,7 @@ export default function App() {
           <button
             id="add-hotel-btn"
             className="btn btn-primary"
-            onClick={() => { setEditingHotel(null); setShowForm(true); }}
+            onClick={() => { setEditingHotel(undefined); setShowForm(true); }}
           >
             + Add Hotel
           </button>
@@ -194,7 +217,7 @@ export default function App() {
       {error && (
         <div className="error-banner" role="alert">
           <strong>Error:</strong> {error}
-          <button onClick={() => setError(null)} aria-label="Dismiss error">✕</button>
+          <button onClick={() => setError(undefined)} aria-label="Dismiss error">✕</button>
         </div>
       )}
 
@@ -224,7 +247,7 @@ export default function App() {
       {/* Add/Edit modal */}
       {showForm && (
         <HotelForm
-          initialData={editingHotel || undefined}
+          initialData={editingHotel}
           onSubmit={handleAddOrUpdate}
           onCancel={handleCancelForm}
         />
