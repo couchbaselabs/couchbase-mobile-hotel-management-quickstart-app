@@ -48,11 +48,11 @@ Gradle requires **JDK 17 or later** to run. The Android app is configured to com
 Use the terminal to clone the GitHub repository:
 
 ```bash
-git clone https://github.com/couchbase-examples/android-kotlin-quickstart.git
+git@github.com:couchbaselabs/couchbase-mobile-hotel-management-quickstart-app.git
 ```
 
 ### Open the project in Android Studio
-- Navigate to the `android-kotlin-quickstart` folder
+- Navigate to the `couchbase-mobile-hotel-management-quickstart-app.git` folder
 - Open Android Studio and select **Open** → choose the project directory
 - Wait for Gradle sync to complete
 
