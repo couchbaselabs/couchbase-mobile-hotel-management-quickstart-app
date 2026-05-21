@@ -1,0 +1,4 @@
+# To override the cbl package version, uncomment the following:
+#
+# dependency_overrides:
+#   cbl: 4.0.0-dev.6
