@@ -144,6 +144,13 @@ You can search hotel names using Couchbase Lite's built-in Full Text Search (FTS
 ### Offline-First Sync
 Even if you disconnect from the network or Capella App Services goes offline, the app continues working with the local database. Any local changes sync automatically when the connection is restored.
 
+## Screenshots                                                                                                                                          
+<p align="center">                                                                                                                                      
+   <img src="assets/images/hotel_list.png" alt="Hotel List Screen" width="270" />                                                                        
+   <img src="assets/images/hotel_detail.png" alt="Hotel Detail Screen" width="270" />                                                                    
+   <img src="assets/images/hotel_form.png" alt="Hotel Form Screen" width="270" />                                                                        
+</p>   
+
 ## Learn more
 - [Couchbase Lite on Flutter](https://docs.couchbase.com/couchbase-lite/current/flutter/quickstart.html)
 - [App Services](https://docs.couchbase.com/cloud/app-services/index.html)
