@@ -43,6 +43,7 @@ class HotelListViewModel {
   Hotel? _hotelToDelete;
   bool _descending = true;
   String _searchText = '';
+  StreamSubscription<List<Hotel>>? _queryUpdatesSubscription;
 
   void init() {
     descendingList = _descendingListController.stream;
@@ -52,8 +53,10 @@ class HotelListViewModel {
   }
 
   void _bindListeners() {
-    _dbManager.queryUpdates.listen((hotels) {
-      _hotelsController.add(hotels);
+    _queryUpdatesSubscription = _dbManager.queryUpdates.listen((hotels) {
+      if (!_hotelsController.isClosed) {
+        _hotelsController.add(hotels);
+      }
     });
   }
 
@@ -94,6 +97,7 @@ class HotelListViewModel {
   }
 
   void dispose() {
+    _queryUpdatesSubscription?.cancel();
     _hotelsController.close();
     _descendingListController.close();
     _searchTextController.close();

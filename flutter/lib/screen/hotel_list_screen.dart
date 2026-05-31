@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../model/hotel.dart';
 import '../viewmodel/hotel_list_viewmodel.dart';
@@ -22,8 +23,14 @@ import '../widget/hotel_list_tile.dart';
 class HotelListScreen extends StatefulWidget {
   final void Function(Hotel) onHotelClick;
   final void Function() onAddHotel;
+  final void Function(Hotel) onEditHotel;
 
-  const HotelListScreen({super.key, required this.onHotelClick, required this.onAddHotel});
+  const HotelListScreen({
+    super.key,
+    required this.onHotelClick,
+    required this.onAddHotel,
+    required this.onEditHotel,
+  });
 
   @override
   State<HotelListScreen> createState() => _HotelListScreenState();
@@ -32,17 +39,24 @@ class HotelListScreen extends StatefulWidget {
 class _HotelListScreenState extends State<HotelListScreen> {
   late final HotelListViewModel _viewModel;
   bool _showSearch = false;
-  Hotel? _hotelToEdit;
+  StreamSubscription<bool>? _deleteAlertSubscription;
 
   @override
   void initState() {
     super.initState();
     _viewModel = HotelListViewModel();
     _viewModel.init();
+
+    _deleteAlertSubscription = _viewModel.showDeleteAlert.listen((show) {
+      if (show && mounted) {
+        _showDeleteDialog();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _deleteAlertSubscription?.cancel();
     _viewModel.dispose();
     super.dispose();
   }
@@ -147,7 +161,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
                           onClick: () => widget.onHotelClick(hotel),
                           onDelete: () => _viewModel.onDeleteRequested(hotel),
                           onEdit: () {
-                            setState(() => _hotelToEdit = hotel);
+                            widget.onEditHotel(hotel);
                           },
                         ),
                         const Divider(height: 1),
@@ -163,15 +177,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
     );
   }
 
-  @override
-  void didUpdateWidget(covariant HotelListScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Handle edit navigation (mirrors Android LaunchedEffect pattern)
-    if (_hotelToEdit != null) {
-      widget.onHotelClick(_hotelToEdit!);
-      setState(() => _hotelToEdit = null);
-    }
-  }
+
 
   void _showDeleteDialog() {
     showDialog(
@@ -202,17 +208,4 @@ class _HotelListScreenState extends State<HotelListScreen> {
     );
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Listen for delete alert and error streams
-    _viewModel.showDeleteAlert.listen((show) {
-      if (show && mounted) {
-        _showDeleteDialog();
-      }
-    });
-
-    // Listen for errors
-    // Note: ErrorManager is a singleton; listen once per app life in main.dart
-  }
 }

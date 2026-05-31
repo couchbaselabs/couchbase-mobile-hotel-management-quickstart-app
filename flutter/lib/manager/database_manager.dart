@@ -58,6 +58,7 @@ class DatabaseManager implements DatabaseManaging {
   SyncDatabase? _database;
   SyncCollection? _collection;
   Replicator? _replicator;
+  Query? _liveQuery;
   ListenerToken? _queryListenerToken;
 
   final _queryUpdatesController = StreamController<List<Hotel>>.broadcast();
@@ -129,7 +130,9 @@ class DatabaseManager implements DatabaseManaging {
         Replicator.create(replConfig).then((replicator) {
           _replicator = replicator;
           final tokenResult = _replicator!.addChangeListener((change) {
-            _replicatorStatusController.add(change.status.activity.name);
+            if (!_replicatorStatusController.isClosed) {
+              _replicatorStatusController.add(change.status.activity.name);
+            }
             if (change.status.error != null) {
               final error = change.status.error!;
               ErrorManager().showError(
@@ -167,7 +170,8 @@ class DatabaseManager implements DatabaseManaging {
 
       // Remove previous query listener
       if (_queryListenerToken != null) {
-        // db.createQuery('SELECT 1').removeChangeListener(_queryListenerToken!);
+        await _liveQuery?.removeChangeListener(_queryListenerToken!);
+        _queryListenerToken = null;
       }
 
       final sortOrder = descending ? 'DESC' : 'ASC';
@@ -190,6 +194,7 @@ class DatabaseManager implements DatabaseManaging {
         );
       }
 
+      _liveQuery = query;
       _queryListenerToken = await query.addChangeListener((change) {
         final hotels = <Hotel>[];
         final allResults = change.results.allResults();
@@ -203,7 +208,9 @@ class DatabaseManager implements DatabaseManaging {
                 // Skip invalid results
               }
             }
-            _queryUpdatesController.add(hotels);
+            if (!_queryUpdatesController.isClosed) {
+              _queryUpdatesController.add(hotels);
+            }
           });
         } else {
           for (final result in allResults) {
@@ -214,7 +221,9 @@ class DatabaseManager implements DatabaseManaging {
               // Skip invalid results
             }
           }
-          _queryUpdatesController.add(hotels);
+          if (!_queryUpdatesController.isClosed) {
+            _queryUpdatesController.add(hotels);
+          }
         }
       });
     } catch (e) {
@@ -336,13 +345,14 @@ class DatabaseManager implements DatabaseManaging {
   }
 
   void close() {
-    if (_queryListenerToken != null && _database != null) {
-      // _database!.createQuery('SELECT 1').removeChangeListener(_queryListenerToken!);
+    if (_queryListenerToken != null && _liveQuery != null) {
+      _liveQuery!.removeChangeListener(_queryListenerToken!);
     }
     _replicator?.stop();
     _replicator?.close();
     _database?.close();
     _queryUpdatesController.close();
     _replicatorStatusController.close();
+    _instance = null;
   }
 }

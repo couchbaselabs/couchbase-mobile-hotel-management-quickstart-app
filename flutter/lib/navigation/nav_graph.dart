@@ -82,12 +82,14 @@ class _NavGraphState extends State<NavGraph> {
         return HotelListScreen(
           onHotelClick: _navigateToDetails,
           onAddHotel: _navigateToAddForm,
+          onEditHotel: _navigateToEditForm,
         );
       case _Screen.details:
         if (_selectedHotel == null) {
           return HotelListScreen(
             onHotelClick: _navigateToDetails,
             onAddHotel: _navigateToAddForm,
+            onEditHotel: _navigateToEditForm,
           );
         }
         return HotelDetailsScreen(

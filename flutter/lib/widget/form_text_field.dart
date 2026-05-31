@@ -49,7 +49,7 @@ class _FormTextFieldState extends State<FormTextField> {
   @override
   void didUpdateWidget(FormTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.value != oldWidget.value) {
+    if (widget.value != oldWidget.value && widget.value != _controller.text) {
       _controller.text = widget.value;
     }
   }

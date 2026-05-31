@@ -19,6 +19,7 @@ import 'manager/database_manager.dart';
 import 'manager/error_manager.dart';
 import 'navigation/nav_graph.dart';
 import 'theme/theme.dart';
+import 'widget/error_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,30 +70,13 @@ class _ErrorManagerProviderState extends State<ErrorManagerProvider> {
     if (error != null && mounted) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: error.closable,
-            builder: (ctx) {
-              return AlertDialog(
-                title: Text(error.title),
-                content: Text(error.message),
-                actions: [
-                  if (error.closable)
-                    TextButton(
-                      onPressed: () {
-                         _errorManager.dismissAndShowNext();
-                        Navigator.of(ctx).pop();
-                       },
-                      child: const Text('OK'),
-                     ),
-                 ],
-               );
-             },
-           );
-         }
-       });
-     }
-   }
+          showErrorDialog(context, error, () {
+            _errorManager.dismissAndShowNext();
+          });
+        }
+      });
+    }
+  }
 
    @override
   void dispose() {
