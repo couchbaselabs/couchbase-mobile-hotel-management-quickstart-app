@@ -79,6 +79,19 @@ The **Connect** page will appear, showing the Public Connection string.
 - Click the **copy icon** next to the URL to copy the App Endpoint URL to your clipboard.
   > You'll need this in the app configuration file.
 
+### Configure the App
+To enable replication and cloud sync with Couchbase Capella, you must create a file named `config.json` inside the respective platform's assets or configuration directory with the following structure, populated with your Capella credentials:
+
+```json
+{
+   "capellaEndpointUrl": "",
+   "username": "",
+   "password": ""
+}
+```
+
+*Note: Please see the platform-specific instructions below (`flutter/`, `web/`, `Android/`, `iOS/`) for exact file paths and steps.*
+
 ## Getting Help
 You can reach out on the GitHub repo or join our community of developers:
 
@@ -94,3 +107,5 @@ The repo is organized as follows:
 - Android: This folder includes source code corresponding to the Android version of the Hotel Quickstart application. Follow the instructions in the [README.md](Android/README.md) file in that folder to build and run the Android app.
 
 - Web: This folder includes source code corresponding to the Web (JavaScript/React) version of the Hotel Quickstart application. Follow the instructions in the [README.md](web/README.md) file in that folder to build and run the web app.
+
+- flutter: This folder includes source code corresponding to the Flutter version of the Hotel Quickstart application. Copy your Capella configuration values to `flutter/assets/config.json`, then follow the instructions in the [README.md](flutter/README.md) file in that folder to build and run the Flutter app.

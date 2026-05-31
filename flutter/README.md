@@ -61,7 +61,7 @@ git clone git@github.com:couchbaselabs/couchbase-mobile-hotel-management-quickst
 Inside the project, locate the config file:
 
 ```
-flutter/assets/config.json
+assets/config.json
 ```
 
 Open the file and provide the following configuration values:
