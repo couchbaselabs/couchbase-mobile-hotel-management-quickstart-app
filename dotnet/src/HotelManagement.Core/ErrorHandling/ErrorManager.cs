@@ -17,14 +17,4 @@ public sealed class ErrorManager
         _errors.Enqueue(error);
         ErrorRaised?.Invoke(error);
     }
-
-    public ErrorModel? DismissAndShowNext()
-    {
-        if (_errors.Count > 0)
-        {
-            _errors.Dequeue();
-        }
-
-        return _errors.Count > 0 ? _errors.Peek() : null;
-    }
 }
