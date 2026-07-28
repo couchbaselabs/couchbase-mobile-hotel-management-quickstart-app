@@ -5,7 +5,11 @@
 ## App Overview
 This is a .NET console application that mirrors the Android, Flutter, and iOS quickstarts: an offline-first hotel management app backed by [Couchbase Lite](https://docs.couchbase.com/couchbase-lite/current/csharp/gs-install.html), syncing the `hotel` collection of the `travel-sample` bucket with a Capella App Services endpoint.
 
-It intentionally uses a text UI instead of a graphical one (no MAUI/WPF) so the full CRUD + sync + full-text-search feature set can be exercised and unit/integration tested from the terminal on Windows, macOS, or Linux without any mobile tooling. All of the interesting logic — the Couchbase Lite data layer, configuration loading, and the hotel model — lives in a plain, cross-platform, fully-tested class library (`HotelManagement.Core`); the console app itself is a thin presentation layer over that library.
+It intentionally uses a text UI instead of a graphical one (no MAUI/WPF) so the full CRUD + sync + full-text-search feature set can be exercised and unit/integration tested directly from the terminal without any mobile tooling.
+
+**Note**: Windows is the primary tested and supported deployment platform for this quickstart. While macOS and Linux may work, they are currently untested and unsupported.
+
+All of the interesting logic — the Couchbase Lite data layer, configuration loading, and the hotel model — lives in a plain, cross-platform, fully-tested class library (`HotelManagement.Core`); the console app itself is a thin presentation layer over that library.
 
 ### A note on the data model
 The Android and Flutter ports use a reduced, flat 10-field `Hotel` schema. The iOS port uses the full `travel-sample` hotel schema (geo-coordinates, reviews, amenities, pricing, check-in/check-out, etc). This .NET port matches the **iOS (full schema)** version, so it has feature parity with the richest of the three native examples. See [`HotelManagement.Core/Models/Hotel.cs`](src/HotelManagement.Core/Models/Hotel.cs) for the full field list.
