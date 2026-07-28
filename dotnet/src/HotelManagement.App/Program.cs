@@ -30,8 +30,7 @@ using var updateGate = new ManualResetEventSlim(false);
 
 db.HotelsChanged += updated =>
 {
-    hotels.Clear();
-    hotels.AddRange(updated);
+    hotels = updated.ToList();
     updateGate.Set();
 };
 db.ReplicatorStatusChanged += status => replicatorStatus = status;
