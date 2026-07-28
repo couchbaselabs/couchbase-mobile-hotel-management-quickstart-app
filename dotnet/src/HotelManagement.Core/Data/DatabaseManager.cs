@@ -179,6 +179,7 @@ public sealed class DatabaseManager : IDatabaseManaging
             query.Parameters = parameters;
 
             _queryListenerToken?.Remove();
+            _liveQuery?.Dispose();
             _liveQuery = query;
             _queryListenerToken = query.AddChangeListener((_, args) =>
             {
@@ -281,8 +282,11 @@ public sealed class DatabaseManager : IDatabaseManaging
     public void Dispose()
     {
         _queryListenerToken?.Remove();
+        _liveQuery?.Dispose();
         _replicatorListenerToken?.Remove();
-        _replicator?.Stop();
+        _replicator?.Dispose();
+        _collection?.Dispose();
         _database?.Close();
+        _database?.Dispose();
     }
 }
