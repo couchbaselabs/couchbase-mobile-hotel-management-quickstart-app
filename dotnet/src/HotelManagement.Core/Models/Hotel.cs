@@ -126,8 +126,8 @@ public sealed class Hotel
             && Checkin == other.Checkin
             && Checkout == other.Checkout
             && Price == other.Price
-            && Geo.Lat == other.Geo.Lat
-            && Geo.Lon == other.Geo.Lon
+            && Math.Abs(Geo.Lat - other.Geo.Lat) < 1e-9
+            && Math.Abs(Geo.Lon - other.Geo.Lon) < 1e-9
             && Geo.Accuracy == other.Geo.Accuracy
             && Country == other.Country
             && City == other.City
