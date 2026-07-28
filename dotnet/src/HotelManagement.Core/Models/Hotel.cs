@@ -111,7 +111,7 @@ public sealed class Hotel
     }
 
     /// <summary>Structural equality over every editable field, used to detect unsaved changes in the form screen.</summary>
-    public bool HasSameContentAs(Hotel other)
+    public bool HasSameContentAs(Hotel? other)
     {
         if (other is null) return false;
         return Title == other.Title
