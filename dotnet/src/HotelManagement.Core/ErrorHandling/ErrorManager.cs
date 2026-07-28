@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace HotelManagement.Core.ErrorHandling;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace HotelManagement.Core.ErrorHandling;
 /// </summary>
 public sealed class ErrorManager
 {
-    private readonly Queue<ErrorModel> _errors = new();
+    private readonly ConcurrentQueue<ErrorModel> _errors = new();
 
     public event Action<ErrorModel>? ErrorRaised;
 
