@@ -15,8 +15,6 @@ public interface IDatabaseManaging : IDisposable
     /// <summary>Raised whenever the replicator's activity level changes (e.g. Idle, Busy, Offline, Stopped).</summary>
     event Action<string>? ReplicatorStatusChanged;
 
-    string ReplicatorStatus { get; }
-
     void Initialize();
 
     /// <summary>(Re)runs the live query with the given sort direction and optional full-text search term.</summary>
