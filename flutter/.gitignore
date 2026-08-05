@@ -34,6 +34,9 @@ migrate_working_dir/
 /build/
 /assets/config.json
 
+# Test coverage output (flutter test --coverage)
+coverage/
+
 # Symbolication related
 app.*.symbols
 

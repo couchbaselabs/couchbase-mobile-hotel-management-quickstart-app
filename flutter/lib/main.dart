@@ -24,12 +24,12 @@ import 'widget/error_dialog.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-   // Initialize Couchbase Lite and database (mirrors QuickstartApp.onCreate)
+  // Initialize Couchbase Lite and database (mirrors QuickstartApp.onCreate)
   try {
     await DatabaseManager.getInstance().initialize();
-   } catch (e) {
-     // Error already surfaced via ErrorManager in DatabaseManager
-   }
+  } catch (e) {
+    // Error already surfaced via ErrorManager in DatabaseManager
+  }
 
   runApp(const QuickstartApp());
 }
@@ -37,14 +37,10 @@ void main() async {
 class QuickstartApp extends StatelessWidget {
   const QuickstartApp({super.key});
 
-   @override
+  @override
   Widget build(BuildContext context) {
-    return QuickstartTheme(
-      child: ErrorManagerProvider(
-        child: NavGraph(),
-       ),
-     );
-   }
+    return QuickstartTheme(child: ErrorManagerProvider(child: NavGraph()));
+  }
 }
 
 class ErrorManagerProvider extends StatefulWidget {
@@ -52,18 +48,18 @@ class ErrorManagerProvider extends StatefulWidget {
 
   const ErrorManagerProvider({super.key, required this.child});
 
-   @override
+  @override
   State<ErrorManagerProvider> createState() => _ErrorManagerProviderState();
 }
 
 class _ErrorManagerProviderState extends State<ErrorManagerProvider> {
   final ErrorManager _errorManager = ErrorManager();
 
-   @override
+  @override
   void initState() {
     super.initState();
-     _errorManager.addListener(_showLastError);
-   }
+    _errorManager.addListener(_showLastError);
+  }
 
   void _showLastError() {
     final error = _errorManager.currentError;
@@ -78,14 +74,14 @@ class _ErrorManagerProviderState extends State<ErrorManagerProvider> {
     }
   }
 
-   @override
+  @override
   void dispose() {
-     _errorManager.removeListener(_showLastError);
+    _errorManager.removeListener(_showLastError);
     super.dispose();
-   }
+  }
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return widget.child;
-   }
+  }
 }

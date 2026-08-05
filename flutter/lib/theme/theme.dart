@@ -43,14 +43,8 @@ class QuickstartTheme extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       color: couchbaseRed,
-      theme: ThemeData(
-        colorScheme: colorScheme,
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: colorScheme,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(colorScheme: colorScheme, useMaterial3: true),
+      darkTheme: ThemeData(colorScheme: colorScheme, useMaterial3: true),
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       home: child,
     );

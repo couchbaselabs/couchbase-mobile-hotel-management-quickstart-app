@@ -20,89 +20,46 @@ import '../screen/hotel_details_screen.dart';
 import '../screen/hotel_form_screen.dart';
 import '../screen/hotel_list_screen.dart';
 
-enum _Screen { list, details, form }
-
-class NavGraph extends StatefulWidget {
+/// Root of the app's navigation, backed by the framework [Navigator] instead
+/// of manual state, so the Android/desktop back button and the browser back
+/// button correctly pop the current screen instead of exiting the app.
+class NavGraph extends StatelessWidget {
   const NavGraph({super.key});
-
-   @override
-  State<NavGraph> createState() => _NavGraphState();
-}
-
-class _NavGraphState extends State<NavGraph> {
-  _Screen _currentScreen = _Screen.list;
-  Hotel? _selectedHotel;
-  Hotel? _hotelBeingEdited;
-
-  void _navigateToDetails(Hotel hotel) {
-    setState(() {
-      _selectedHotel = hotel;
-      _currentScreen = _Screen.details;
-    });
-  }
-
-  void _navigateToAddForm() {
-    setState(() {
-      _selectedHotel = null;
-      _hotelBeingEdited = null;
-      _currentScreen = _Screen.form;
-    });
-  }
-
-  void _navigateToEditForm(Hotel hotel) {
-    setState(() {
-      _hotelBeingEdited = hotel;
-      _currentScreen = _Screen.form;
-    });
-  }
-
-  void _goBack() {
-    setState(() {
-      if (_currentScreen == _Screen.form) {
-          _selectedHotel = _hotelBeingEdited;
-          _currentScreen = _Screen.details;
-      } else {
-        _currentScreen = _Screen.list;
-      }
-    });
-  }
-
-  void _goToRoot() {
-    setState(() {
-      _selectedHotel = null;
-      _hotelBeingEdited = null;
-      _currentScreen = _Screen.list;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    switch (_currentScreen) {
-      case _Screen.list:
-        return HotelListScreen(
-          onHotelClick: _navigateToDetails,
-          onAddHotel: _navigateToAddForm,
-          onEditHotel: _navigateToEditForm,
-        );
-      case _Screen.details:
-        if (_selectedHotel == null) {
-          return HotelListScreen(
-            onHotelClick: _navigateToDetails,
-            onAddHotel: _navigateToAddForm,
-            onEditHotel: _navigateToEditForm,
-          );
-        }
-        return HotelDetailsScreen(
-          hotel: _selectedHotel!,
-          onBack: _goBack,
-          onEdit: () => _navigateToEditForm(_selectedHotel!),
-        );
-      case _Screen.form:
-        return HotelFormScreen(
-          existingHotel: _hotelBeingEdited,
-          onBack: _goBack,
-          onSaved: _goToRoot,
-        );
-    }
+    return HotelListScreen(
+      onHotelClick: (hotel) => _openDetails(context, hotel),
+      onAddHotel: () => _openForm(context, null),
+      onEditHotel: (hotel) => _openForm(context, hotel),
+    );
+  }
+
+  void _openDetails(BuildContext context, Hotel hotel) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => HotelDetailsScreen(
+          hotel: hotel,
+          onBack: () => Navigator.of(context).pop(),
+          onEdit: () => _openForm(context, hotel),
+        ),
+      ),
+    );
+  }
+
+  void _openForm(BuildContext context, Hotel? existingHotel) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => HotelFormScreen(
+          existingHotel: existingHotel,
+          onBack: () => Navigator.of(context).pop(),
+          // Saving always returns all the way to the hotel list, whether the
+          // form was reached via "Add" (from the list) or "Edit" (from the
+          // details screen), mirroring the app's original behavior.
+          onSaved: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
+        ),
+      ),
+    );
   }
 }

@@ -24,5 +24,5 @@ class ConfigurationManager {
     final jsonStr = await rootBundle.loadString('assets/config.json');
     final map = jsonDecode(jsonStr) as Map<String, dynamic>;
     return ConfigurationModel.fromJson(map);
-   }
+  }
 }

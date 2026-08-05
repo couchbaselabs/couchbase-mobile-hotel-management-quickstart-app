@@ -44,17 +44,17 @@ class HotelFormModel {
   });
 
   HotelFormModel.fromHotel(Hotel hotel)
-      : documentId = hotel.documentId,
-        name = hotel.name,
-        title = hotel.title,
-        description = hotel.description,
-        address = hotel.address,
-        city = hotel.city,
-        state = hotel.state,
-        country = hotel.country,
-        phone = hotel.phone,
-        email = hotel.email,
-        url = hotel.url;
+    : documentId = hotel.documentId,
+      name = hotel.name,
+      title = hotel.title,
+      description = hotel.description,
+      address = hotel.address,
+      city = hotel.city,
+      state = hotel.state,
+      country = hotel.country,
+      phone = hotel.phone,
+      email = hotel.email,
+      url = hotel.url;
 
   Hotel toHotel() {
     return Hotel(
@@ -108,8 +108,17 @@ class HotelFormModel {
   @override
   int get hashCode {
     return Object.hash(
-      documentId, name, title, description, address, city,
-      state, country, phone, email, url,
+      documentId,
+      name,
+      title,
+      description,
+      address,
+      city,
+      state,
+      country,
+      phone,
+      email,
+      url,
     );
   }
 }

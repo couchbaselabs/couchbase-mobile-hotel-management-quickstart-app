@@ -57,29 +57,21 @@ class HotelFormViewModel {
 
   HotelFormModel get currentHotel => _currentHotel;
 
+  // NOTE: the field streams and `modelDidChange` intentionally do NOT emit
+  // an initial value here. These are broadcast streams, which never replay
+  // past events to a listener that subscribes later (e.g. a StreamBuilder
+  // built after this constructor runs) -- an event emitted here would be
+  // silently dropped. Every consumer already reads the starting value
+  // synchronously via `currentHotel`/`viewMode` (see each StreamBuilder's
+  // `initialData` in HotelFormScreen); the streams only need to carry
+  // subsequent updates.
   HotelFormViewModel({Hotel? existingHotel})
-       : _dbManager = DatabaseManagerProvider.factory(),
-        viewMode = existingHotel == null ? ViewMode.add : ViewMode.edit {
-    final initial = existingHotel != null
+    : _dbManager = DatabaseManagerProvider.factory(),
+      viewMode = existingHotel == null ? ViewMode.add : ViewMode.edit {
+    _currentHotel = existingHotel != null
         ? HotelFormModel.fromHotel(existingHotel)
         : HotelFormModel();
-    _initializeFromModel(initial);
     _originalModel = _currentHotel.copy();
-    _modelDidChangeController.add(false);
-  }
-
-  void _initializeFromModel(HotelFormModel model) {
-    _currentHotel = model;
-    _nameController.add(model.name);
-    _titleController.add(model.title);
-    _descriptionController.add(model.description);
-    _addressController.add(model.address);
-    _cityController.add(model.city);
-    _stateController.add(model.state);
-    _countryController.add(model.country);
-    _phoneController.add(model.phone);
-    _emailController.add(model.email);
-    _urlController.add(model.url);
   }
 
   void updateName(String value) {
@@ -156,8 +148,6 @@ class HotelFormViewModel {
     _originalModel = _currentHotel.copy();
     _modelDidChangeController.add(false);
   }
-
-  void init() {}
 
   void dispose() {
     _nameController.close();

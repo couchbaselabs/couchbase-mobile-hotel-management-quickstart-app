@@ -16,6 +16,7 @@
 
 import 'dart:async';
 import 'package:cbl/cbl.dart';
+import 'package:flutter/foundation.dart';
 import '../model/error_model.dart';
 import '../model/hotel.dart';
 import 'configuration_manager.dart';
@@ -57,8 +58,15 @@ class DatabaseManager implements DatabaseManaging {
 
   SyncDatabase? _database;
   SyncCollection? _collection;
-  Replicator? _replicator;
-  Query? _liveQuery;
+
+  // This app only ever creates a SyncDatabase, so the query/replicator
+  // objects it produces are always the synchronous variants. Keeping the
+  // concrete Sync* types (instead of the general Query/Replicator interfaces,
+  // which are also implemented by an async/isolate-backed variant) lets the
+  // compiler guarantee that, removing the need for runtime `is Future`
+  // checks around every call.
+  SyncReplicator? _replicator;
+  SyncQuery? _liveQuery;
   ListenerToken? _queryListenerToken;
 
   final _queryUpdatesController = StreamController<List<Hotel>>.broadcast();
@@ -100,7 +108,8 @@ class DatabaseManager implements DatabaseManaging {
       ], ignoreAccents: false);
       col.createIndex(_ftsIndexName, ftsIndex);
     } catch (e) {
-      // Index may already exist
+      // Expected when the index already exists from a previous run.
+      debugPrint('DatabaseManager: createIndex($_ftsIndexName) skipped: $e');
     }
   }
 
@@ -127,9 +136,9 @@ class DatabaseManager implements DatabaseManaging {
         );
         replConfig.addCollection(col);
 
-        Replicator.create(replConfig).then((replicator) {
+        SyncReplicator.create(replConfig).then((replicator) {
           _replicator = replicator;
-          final tokenResult = _replicator!.addChangeListener((change) {
+          _replicator!.addChangeListener((change) {
             if (!_replicatorStatusController.isClosed) {
               _replicatorStatusController.add(change.status.activity.name);
             }
@@ -143,14 +152,7 @@ class DatabaseManager implements DatabaseManaging {
               );
             }
           });
-          // Handle both sync (ListenerToken) and async (Future<ListenerToken>) cases
-          if (tokenResult is Future) {
-            (tokenResult as Future<ListenerToken>).then((_) {
-              _replicator!.start();
-            });
-          } else {
-            _replicator!.start();
-          }
+          _replicator!.start();
         });
       });
     } catch (e) {
@@ -170,12 +172,12 @@ class DatabaseManager implements DatabaseManaging {
 
       // Remove previous query listener
       if (_queryListenerToken != null) {
-        await _liveQuery?.removeChangeListener(_queryListenerToken!);
+        _liveQuery?.removeChangeListener(_queryListenerToken!);
         _queryListenerToken = null;
       }
 
       final sortOrder = descending ? 'DESC' : 'ASC';
-      Query query;
+      SyncQuery query;
 
       if (textSearch.isNotEmpty) {
         final pattern = '$textSearch*';
@@ -186,7 +188,7 @@ class DatabaseManager implements DatabaseManaging {
         );
         final params = Parameters();
         params.setString(pattern, name: 'searchTerm');
-        await query.setParameters(params);
+        query.setParameters(params);
       } else {
         query = db.createQuery(
           'SELECT META().id AS documentId, * FROM `$_scopeName`.`$_collectionName` AS hotel '
@@ -195,35 +197,18 @@ class DatabaseManager implements DatabaseManaging {
       }
 
       _liveQuery = query;
-      _queryListenerToken = await query.addChangeListener((change) {
+      _queryListenerToken = query.addChangeListener((change) {
         final hotels = <Hotel>[];
-        final allResults = change.results.allResults();
-        if (allResults is Future) {
-          (allResults as Future<List<Result>>).then((list) {
-            for (final result in list) {
-              try {
-                final hotel = _resultToHotel(result);
-                if (hotel != null) hotels.add(hotel);
-              } catch (e) {
-                // Skip invalid results
-              }
-            }
-            if (!_queryUpdatesController.isClosed) {
-              _queryUpdatesController.add(hotels);
-            }
-          });
-        } else {
-          for (final result in allResults) {
-            try {
-              final hotel = _resultToHotel(result);
-              if (hotel != null) hotels.add(hotel);
-            } catch (e) {
-              // Skip invalid results
-            }
+        for (final result in change.results.allResults()) {
+          try {
+            final hotel = _resultToHotel(result);
+            if (hotel != null) hotels.add(hotel);
+          } catch (e) {
+            debugPrint('DatabaseManager: skipping invalid query result: $e');
           }
-          if (!_queryUpdatesController.isClosed) {
-            _queryUpdatesController.add(hotels);
-          }
+        }
+        if (!_queryUpdatesController.isClosed) {
+          _queryUpdatesController.add(hotels);
         }
       });
     } catch (e) {
@@ -246,19 +231,7 @@ class DatabaseManager implements DatabaseManaging {
     try {
       final col = _collection;
       if (col == null) return;
-      final doc = MutableDocument({});
-      doc.setString('hotel', key: 'type');
-      doc.setString(hotel.name, key: 'name');
-      doc.setString(hotel.title, key: 'title');
-      doc.setString(hotel.description, key: 'description');
-      doc.setString(hotel.address, key: 'address');
-      doc.setString(hotel.city, key: 'city');
-      doc.setString(hotel.state, key: 'state');
-      doc.setString(hotel.country, key: 'country');
-      doc.setString(hotel.phone, key: 'phone');
-      doc.setString(hotel.email, key: 'email');
-      doc.setString(hotel.url, key: 'url');
-      col.saveDocument(doc);
+      col.saveDocument(MutableDocument(hotel.toMap()));
     } catch (e) {
       ErrorManager().showError(
         ErrorModel(title: 'Save Error', message: 'Failed to save hotel: $e'),
@@ -282,16 +255,7 @@ class DatabaseManager implements DatabaseManaging {
       if (existingDoc == null) return;
 
       final mutableDoc = existingDoc.toMutable();
-      mutableDoc.setString(hotel.name, key: 'name');
-      mutableDoc.setString(hotel.title, key: 'title');
-      mutableDoc.setString(hotel.description, key: 'description');
-      mutableDoc.setString(hotel.address, key: 'address');
-      mutableDoc.setString(hotel.city, key: 'city');
-      mutableDoc.setString(hotel.state, key: 'state');
-      mutableDoc.setString(hotel.country, key: 'country');
-      mutableDoc.setString(hotel.phone, key: 'phone');
-      mutableDoc.setString(hotel.email, key: 'email');
-      mutableDoc.setString(hotel.url, key: 'url');
+      mutableDoc.setData(hotel.toMap());
       col.saveDocument(mutableDoc);
     } catch (e) {
       ErrorManager().showError(
@@ -328,20 +292,7 @@ class DatabaseManager implements DatabaseManaging {
     final documentId = result.string('documentId');
     final hotelDict = result.dictionary('hotel');
     if (hotelDict == null) return null;
-
-    return Hotel(
-      documentId: documentId,
-      name: hotelDict.string('name') ?? '',
-      title: hotelDict.string('title') ?? '',
-      description: hotelDict.string('description') ?? '',
-      address: hotelDict.string('address') ?? '',
-      city: hotelDict.string('city') ?? '',
-      state: hotelDict.string('state') ?? '',
-      country: hotelDict.string('country') ?? '',
-      phone: hotelDict.string('phone') ?? '',
-      email: hotelDict.string('email') ?? '',
-      url: hotelDict.string('url') ?? '',
-    );
+    return Hotel.fromMap(hotelDict.toPlainMap(), documentId);
   }
 
   void close() {

@@ -24,6 +24,11 @@ class ErrorManager extends ChangeNotifier {
 
   ErrorManager._internal();
 
+  @visibleForTesting
+  void resetForTesting() {
+    _errors.clear();
+  }
+
   final List<ErrorModel> _errors = [];
 
   List<ErrorModel> get errors => List.unmodifiable(_errors);
@@ -31,6 +36,13 @@ class ErrorManager extends ChangeNotifier {
   ErrorModel? get currentError => _errors.isNotEmpty ? _errors.first : null;
 
   void showError(ErrorModel error) {
+    // A continuous replicator retries indefinitely, so a persistent
+    // connectivity problem would otherwise queue an identical dialog on
+    // every retry. Only queue it if it isn't already pending.
+    final alreadyQueued = _errors.any(
+      (e) => e.title == error.title && e.message == error.message,
+    );
+    if (alreadyQueued) return;
     _errors.add(error);
     notifyListeners();
   }

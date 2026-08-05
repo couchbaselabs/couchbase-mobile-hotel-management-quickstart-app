@@ -14,7 +14,6 @@
 // limitations under the License.
 //
 
-import 'dart:async';
 import 'package:flutter/material.dart';
 import '../model/hotel.dart';
 import '../viewmodel/hotel_list_viewmodel.dart';
@@ -38,27 +37,29 @@ class HotelListScreen extends StatefulWidget {
 
 class _HotelListScreenState extends State<HotelListScreen> {
   late final HotelListViewModel _viewModel;
+  final _searchController = TextEditingController();
   bool _showSearch = false;
-  StreamSubscription<bool>? _deleteAlertSubscription;
 
   @override
   void initState() {
     super.initState();
     _viewModel = HotelListViewModel();
     _viewModel.init();
-
-    _deleteAlertSubscription = _viewModel.showDeleteAlert.listen((show) {
-      if (show && mounted) {
-        _showDeleteDialog();
-      }
-    });
   }
 
   @override
   void dispose() {
-    _deleteAlertSubscription?.cancel();
+    _searchController.dispose();
     _viewModel.dispose();
     super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() => _showSearch = !_showSearch);
+    if (!_showSearch && _searchController.text.isNotEmpty) {
+      _searchController.clear();
+      _viewModel.onSearchTextChanged('');
+    }
   }
 
   @override
@@ -76,7 +77,8 @@ class _HotelListScreenState extends State<HotelListScreen> {
               initialData: 'Stopped',
               builder: (context, snapshot) {
                 final status = snapshot.data ?? 'Stopped';
-                final displayStatus = status[0].toUpperCase() + status.substring(1).toLowerCase();
+                final displayStatus =
+                    status[0].toUpperCase() + status.substring(1).toLowerCase();
                 return Text(
                   'Sync: $displayStatus',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -91,7 +93,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             tooltip: 'Search',
-            onPressed: () => setState(() => _showSearch = !_showSearch),
+            onPressed: _toggleSearch,
           ),
           StreamBuilder<bool>(
             stream: _viewModel.descendingList,
@@ -99,7 +101,9 @@ class _HotelListScreenState extends State<HotelListScreen> {
             builder: (context, snapshot) {
               final descending = snapshot.data ?? true;
               return IconButton(
-                icon: Icon(descending ? Icons.arrow_downward : Icons.arrow_upward),
+                icon: Icon(
+                  descending ? Icons.arrow_downward : Icons.arrow_upward,
+                ),
                 tooltip: 'Sort',
                 onPressed: () => _viewModel.onSortButtonTapped(),
               );
@@ -118,19 +122,14 @@ class _HotelListScreenState extends State<HotelListScreen> {
           if (_showSearch)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: StreamBuilder<String>(
-                stream: _viewModel.searchText,
-                initialData: '',
-                builder: (context, snapshot) {
-                  return TextField(
-                    onChanged: (text) => _viewModel.onSearchTextChanged(text),
-                    decoration: const InputDecoration(
-                      hintText: 'Search hotels...',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(),
-                    ),
-                  );
-                },
+              child: TextField(
+                controller: _searchController,
+                onChanged: (text) => _viewModel.onSearchTextChanged(text),
+                decoration: const InputDecoration(
+                  hintText: 'Search hotels...',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
 
@@ -159,7 +158,7 @@ class _HotelListScreenState extends State<HotelListScreen> {
                         HotelListTile(
                           hotel: hotel,
                           onClick: () => widget.onHotelClick(hotel),
-                          onDelete: () => _viewModel.onDeleteRequested(hotel),
+                          onConfirmDelete: () => _confirmDelete(hotel),
                           onEdit: () {
                             widget.onEditHotel(hotel);
                           },
@@ -177,35 +176,33 @@ class _HotelListScreenState extends State<HotelListScreen> {
     );
   }
 
-
-
-  void _showDeleteDialog() {
-    showDialog(
+  Future<bool> _confirmDelete(Hotel hotel) async {
+    final displayName = hotel.name.isEmpty ? hotel.title : hotel.name;
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) {
         return AlertDialog(
           title: const Text('Delete Hotel'),
-          content: const Text('Are you sure you want to delete this hotel?'),
+          content: Text('Are you sure you want to delete "$displayName"?'),
           actions: [
             TextButton(
-              onPressed: () {
-                _viewModel.deleteItemAlertDismissed();
-                Navigator.of(ctx).pop();
-              },
+              onPressed: () => Navigator.of(ctx).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                _viewModel.deleteItemAlertAccepted();
-                Navigator.of(ctx).pop();
-              },
-              style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               child: const Text('Delete'),
             ),
           ],
         );
       },
     );
-  }
 
+    if (confirmed != true) return false;
+    await _viewModel.deleteHotel(hotel);
+    return true;
+  }
 }

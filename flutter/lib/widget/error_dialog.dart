@@ -17,7 +17,11 @@
 import 'package:flutter/material.dart';
 import '../model/error_model.dart';
 
-void showErrorDialog(BuildContext context, ErrorModel error, void Function() onDismiss) {
+void showErrorDialog(
+  BuildContext context,
+  ErrorModel error,
+  void Function() onDismiss,
+) {
   showDialog(
     context: context,
     barrierDismissible: error.closable,

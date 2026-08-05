@@ -20,14 +20,14 @@ import '../model/hotel.dart';
 class HotelListTile extends StatelessWidget {
   final Hotel hotel;
   final VoidCallback onClick;
-  final VoidCallback onDelete;
+  final Future<bool> Function() onConfirmDelete;
   final VoidCallback onEdit;
 
   const HotelListTile({
     super.key,
     required this.hotel,
     required this.onClick,
-    required this.onDelete,
+    required this.onConfirmDelete,
     required this.onEdit,
   });
 
@@ -43,9 +43,9 @@ class HotelListTile extends StatelessWidget {
 
     return Dismissible(
       key: Key(hotel.documentId ?? hotel.hashCode.toString()),
-      direction: hotel.documentId != null
-          ? DismissDirection.startToEnd // Only swipe for edit
-          : DismissDirection.endToStart, // Only swipe for delete
+      // Both directions are always available: swipe right to edit, swipe
+      // left to delete (with confirmation).
+      direction: DismissDirection.horizontal,
       background: Container(
         color: const Color(0xFF2196F3),
         alignment: Alignment.centerLeft,
@@ -58,17 +58,21 @@ class HotelListTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      onDismissed: (direction) {
+      confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
           onEdit();
-        } else {
-          onDelete();
+          // Never actually remove the tile for an edit swipe: the screen
+          // navigates away instead.
+          return false;
         }
+        return onConfirmDelete();
       },
       child: ListTile(
         title: Text(
           displayName,
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

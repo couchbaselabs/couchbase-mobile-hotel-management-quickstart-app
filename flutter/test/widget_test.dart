@@ -19,11 +19,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hotel_quickstart/main.dart';
 
 void main() {
-  testWidgets('Hotel Management Quickstart smoke test', (WidgetTester tester) async {
-     // Build our app and trigger a frame.
+  testWidgets('Hotel Management Quickstart smoke test', (
+    WidgetTester tester,
+  ) async {
+    // Build our app and trigger a frame.
     await tester.pumpWidget(const QuickstartApp());
 
-     // Verify that the app starts with the hotels list.
+    // Verify that the app starts with the hotels list.
     expect(find.text('Hotels'), findsOneWidget);
-   });
+  });
 }

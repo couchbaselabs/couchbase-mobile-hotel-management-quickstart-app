@@ -43,7 +43,6 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
   void initState() {
     super.initState();
     _viewModel = HotelFormViewModel(existingHotel: widget.existingHotel);
-    _viewModel.init();
   }
 
   @override
@@ -122,7 +121,7 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
                     value: snapshot.data!,
                     onValueChange: (text) => _viewModel.updateDescription(text),
                     maxLines: 5,
-                    );
+                  );
                 },
               ),
             ],

@@ -23,31 +23,22 @@ class HotelListViewModel {
 
   HotelListViewModel() : _dbManager = DatabaseManagerProvider.factory();
 
+  static const _searchDebounceDuration = Duration(milliseconds: 300);
+
   final _hotelsController = StreamController<List<Hotel>?>.broadcast();
   Stream<List<Hotel>?> get hotels => _hotelsController.stream;
 
   Stream<String> get replicatorStatus => _dbManager.replicatorStatus;
 
   final _descendingListController = StreamController<bool>.broadcast();
-  late final Stream<bool> descendingList;
+  Stream<bool> get descendingList => _descendingListController.stream;
 
-  final _searchTextController = StreamController<String>.broadcast();
-  late final Stream<String> searchText;
-
-  final _showDeleteAlertController = StreamController<bool>.broadcast();
-  Stream<bool> get showDeleteAlert => _showDeleteAlertController.stream;
-
-  final _hotelToDeleteController = StreamController<Hotel?>.broadcast();
-  Stream<Hotel?> get hotelToDelete => _hotelToDeleteController.stream;
-
-  Hotel? _hotelToDelete;
   bool _descending = true;
   String _searchText = '';
+  Timer? _searchDebounce;
   StreamSubscription<List<Hotel>>? _queryUpdatesSubscription;
 
   void init() {
-    descendingList = _descendingListController.stream;
-    searchText = _searchTextController.stream;
     _bindListeners();
     query();
   }
@@ -64,9 +55,12 @@ class HotelListViewModel {
     _dbManager.queryHotels(descending: _descending, textSearch: _searchText);
   }
 
+  // Debounced so a fast typist doesn't tear down and recompile the live FTS
+  // query on every keystroke.
   void onSearchTextChanged(String text) {
     _searchText = text;
-    query();
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(_searchDebounceDuration, query);
   }
 
   void onSortButtonTapped() {
@@ -75,33 +69,12 @@ class HotelListViewModel {
     _descendingListController.add(_descending);
   }
 
-  void onDeleteRequested(Hotel hotel) {
-    _hotelToDelete = hotel;
-    _hotelToDeleteController.add(hotel);
-    _showDeleteAlertController.add(true);
-  }
-
-  void deleteItemAlertAccepted() {
-    if (_hotelToDelete != null) {
-      _dbManager.deleteHotel(_hotelToDelete!);
-    }
-    _hotelToDelete = null;
-    _hotelToDeleteController.add(null);
-    _showDeleteAlertController.add(false);
-  }
-
-  void deleteItemAlertDismissed() {
-    _hotelToDelete = null;
-    _hotelToDeleteController.add(null);
-    _showDeleteAlertController.add(false);
-  }
+  Future<void> deleteHotel(Hotel hotel) => _dbManager.deleteHotel(hotel);
 
   void dispose() {
+    _searchDebounce?.cancel();
     _queryUpdatesSubscription?.cancel();
     _hotelsController.close();
     _descendingListController.close();
-    _searchTextController.close();
-    _showDeleteAlertController.close();
-    _hotelToDeleteController.close();
   }
 }

@@ -29,11 +29,11 @@ class HotelDetailsScreen extends StatelessWidget {
     required this.hotel,
     required this.onBack,
     required this.onEdit,
-   });
+  });
 
-   String _displayName() => hotel.name.isEmpty ? hotel.title : hotel.name;
+  String _displayName() => hotel.name.isEmpty ? hotel.title : hotel.name;
 
-   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -42,50 +42,60 @@ class HotelDetailsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           tooltip: 'Back',
           onPressed: onBack,
-         ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
             tooltip: 'Edit',
             onPressed: onEdit,
-           ),
-         ],
-       ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-           // Info Section
+          // Info Section
           DetailSection(
             title: 'Info',
             children: [
-              if (hotel.name.isNotEmpty) DetailRow(label: 'Name', value: hotel.name),
-              if (hotel.title.isNotEmpty) DetailRow(label: 'Title', value: hotel.title),
-              if (hotel.description.isNotEmpty) DetailRow(label: 'Description', value: hotel.description),
+              if (hotel.name.isNotEmpty)
+                DetailRow(label: 'Name', value: hotel.name),
+              if (hotel.title.isNotEmpty)
+                DetailRow(label: 'Title', value: hotel.title),
+              if (hotel.description.isNotEmpty)
+                DetailRow(label: 'Description', value: hotel.description),
             ],
           ),
 
-           // Address Section
+          // Address Section
           DetailSection(
             title: 'Address',
             children: [
-              if (hotel.address.isNotEmpty) DetailRow(label: 'Address', value: hotel.address),
-              if (hotel.city.isNotEmpty) DetailRow(label: 'City', value: hotel.city),
-              if (hotel.state.isNotEmpty) DetailRow(label: 'State', value: hotel.state),
-              if (hotel.country.isNotEmpty) DetailRow(label: 'Country', value: hotel.country),
+              if (hotel.address.isNotEmpty)
+                DetailRow(label: 'Address', value: hotel.address),
+              if (hotel.city.isNotEmpty)
+                DetailRow(label: 'City', value: hotel.city),
+              if (hotel.state.isNotEmpty)
+                DetailRow(label: 'State', value: hotel.state),
+              if (hotel.country.isNotEmpty)
+                DetailRow(label: 'Country', value: hotel.country),
             ],
           ),
 
-           // Contact Section
+          // Contact Section
           DetailSection(
             title: 'Contact',
             children: [
-              if (hotel.phone.isNotEmpty) DetailRow(label: 'Phone', value: hotel.phone),
-              if (hotel.email.isNotEmpty) DetailRow(label: 'Email', value: hotel.email),
-              if (hotel.url.isNotEmpty) DetailRow(label: 'Website', value: hotel.url),
+              if (hotel.phone.isNotEmpty)
+                DetailRow(label: 'Phone', value: hotel.phone),
+              if (hotel.email.isNotEmpty)
+                DetailRow(label: 'Email', value: hotel.email),
+              if (hotel.url.isNotEmpty)
+                DetailRow(label: 'Website', value: hotel.url),
             ],
           ),
         ],
       ),
     );
-   }
+  }
 }
