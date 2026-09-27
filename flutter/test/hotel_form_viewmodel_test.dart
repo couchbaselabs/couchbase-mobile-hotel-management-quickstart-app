@@ -56,23 +56,21 @@ void main() {
     viewModel.dispose();
   });
 
-  test(
-    'editing a field marks the model dirty, exactly once per change',
-    () async {
-      final viewModel = HotelFormViewModel();
-      final changes = <bool>[];
-      final subscription = viewModel.modelDidChange.listen(changes.add);
+  test('editing a field marks the model dirty, exactly once per change', () {
+    final viewModel = HotelFormViewModel();
+    final changes = <bool>[];
+    void listener() => changes.add(viewModel.modelDidChangeNotifier.value);
+    viewModel.modelDidChangeNotifier.addListener(listener);
 
-      viewModel.updateName('The Grand');
-      await Future<void>.delayed(Duration.zero);
+    // ValueNotifier notifies synchronously, unlike a broadcast stream.
+    viewModel.updateName('The Grand');
 
-      expect(changes, [true]);
-      expect(viewModel.currentHotel.name, 'The Grand');
+    expect(changes, [true]);
+    expect(viewModel.currentHotel.name, 'The Grand');
 
-      await subscription.cancel();
-      viewModel.dispose();
-    },
-  );
+    viewModel.modelDidChangeNotifier.removeListener(listener);
+    viewModel.dispose();
+  });
 
   test('accepting in add mode saves a new hotel', () async {
     final viewModel = HotelFormViewModel();
@@ -89,25 +87,24 @@ void main() {
 
   test(
     'accepting in edit mode updates the existing hotel and clears dirty state',
-    () async {
+    () {
       const existing = Hotel(documentId: '1', name: 'Old Name');
       final viewModel = HotelFormViewModel(existingHotel: existing);
       final changes = <bool>[];
-      final subscription = viewModel.modelDidChange.listen(changes.add);
+      void listener() => changes.add(viewModel.modelDidChangeNotifier.value);
+      viewModel.modelDidChangeNotifier.addListener(listener);
 
       viewModel.updateName('New Name');
-      await Future<void>.delayed(Duration.zero);
       expect(changes, [true]);
 
       viewModel.onAcceptButton();
-      await Future<void>.delayed(Duration.zero);
 
       expect(fake.updated, hasLength(1));
       expect(fake.updated.single.name, 'New Name');
       expect(fake.updated.single.documentId, '1');
       expect(changes, [true, false]);
 
-      await subscription.cancel();
+      viewModel.modelDidChangeNotifier.removeListener(listener);
       viewModel.dispose();
     },
   );

@@ -37,15 +37,16 @@ class QuickstartTheme extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = isDark ? darkColorScheme : lightColorScheme;
-
+    // Theme.of(context) here would resolve above the MaterialApp this widget
+    // is about to create (no ancestor Theme exists yet), always falling back
+    // to Brightness.light -- so brightness must be left to MaterialApp
+    // itself via themeMode/theme/darkTheme, not detected manually.
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       color: couchbaseRed,
-      theme: ThemeData(colorScheme: colorScheme, useMaterial3: true),
-      darkTheme: ThemeData(colorScheme: colorScheme, useMaterial3: true),
-      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData(colorScheme: lightColorScheme, useMaterial3: true),
+      darkTheme: ThemeData(colorScheme: darkColorScheme, useMaterial3: true),
+      themeMode: ThemeMode.system,
       home: child,
     );
   }

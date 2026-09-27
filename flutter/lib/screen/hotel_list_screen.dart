@@ -72,11 +72,9 @@ class _HotelListScreenState extends State<HotelListScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Hotels'),
-            StreamBuilder<String>(
-              stream: _viewModel.replicatorStatus,
-              initialData: 'Stopped',
-              builder: (context, snapshot) {
-                final status = snapshot.data ?? 'Stopped';
+            ValueListenableBuilder<String>(
+              valueListenable: _viewModel.replicatorStatusNotifier,
+              builder: (context, status, _) {
                 final displayStatus =
                     status[0].toUpperCase() + status.substring(1).toLowerCase();
                 return Text(
@@ -95,11 +93,9 @@ class _HotelListScreenState extends State<HotelListScreen> {
             tooltip: 'Search',
             onPressed: _toggleSearch,
           ),
-          StreamBuilder<bool>(
-            stream: _viewModel.descendingList,
-            initialData: true,
-            builder: (context, snapshot) {
-              final descending = snapshot.data ?? true;
+          ValueListenableBuilder<bool>(
+            valueListenable: _viewModel.descendingNotifier,
+            builder: (context, descending, _) {
               return IconButton(
                 icon: Icon(
                   descending ? Icons.arrow_downward : Icons.arrow_upward,
@@ -135,12 +131,9 @@ class _HotelListScreenState extends State<HotelListScreen> {
 
           // Hotel list
           Expanded(
-            child: StreamBuilder<List<Hotel>?>(
-              stream: _viewModel.hotels,
-              initialData: null,
-              builder: (context, snapshot) {
-                final hotels = snapshot.data;
-
+            child: ValueListenableBuilder<List<Hotel>?>(
+              valueListenable: _viewModel.hotelsNotifier,
+              builder: (context, hotels, _) {
                 if (hotels == null) {
                   return const Center(child: CircularProgressIndicator());
                 }

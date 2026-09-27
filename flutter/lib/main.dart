@@ -17,6 +17,7 @@
 import 'package:flutter/material.dart';
 import 'manager/database_manager.dart';
 import 'manager/error_manager.dart';
+import 'model/error_model.dart';
 import 'navigation/nav_graph.dart';
 import 'theme/theme.dart';
 import 'widget/error_dialog.dart';
@@ -52,30 +53,47 @@ class ErrorManagerProvider extends StatefulWidget {
   State<ErrorManagerProvider> createState() => _ErrorManagerProviderState();
 }
 
-class _ErrorManagerProviderState extends State<ErrorManagerProvider> {
+class _ErrorManagerProviderState extends State<ErrorManagerProvider>
+    with WidgetsBindingObserver {
   final ErrorManager _errorManager = ErrorManager();
+
+  // The error currently on screen (or about to be), so a notifyListeners()
+  // firing for an unrelated reason -- e.g. a second, distinct error being
+  // queued behind it -- doesn't re-open a dialog for the same still-current
+  // error and stack a duplicate on top of it.
+  ErrorModel? _shownError;
 
   @override
   void initState() {
     super.initState();
     _errorManager.addListener(_showLastError);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   void _showLastError() {
     final error = _errorManager.currentError;
-    if (error != null && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          showErrorDialog(context, error, () {
-            _errorManager.dismissAndShowNext();
-          });
-        }
-      });
+    if (error == null || !mounted || identical(error, _shownError)) return;
+    _shownError = error;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        showErrorDialog(context, error, () {
+          _shownError = null;
+          _errorManager.dismissAndShowNext();
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      DatabaseManager.getInstance().close();
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _errorManager.removeListener(_showLastError);
     super.dispose();
   }

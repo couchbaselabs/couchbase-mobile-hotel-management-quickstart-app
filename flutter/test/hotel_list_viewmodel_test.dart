@@ -44,29 +44,37 @@ void main() {
   });
 
   test('init loads hotels sorted descending by default', () async {
-    final loaded = viewModel.hotels.firstWhere((h) => h != null);
     viewModel.init();
+    // The database manager's queryUpdates is a real Stream, which delivers
+    // asynchronously (via a microtask) even though the fake's query logic
+    // itself runs synchronously.
+    await Future<void>.delayed(Duration.zero);
 
-    final hotels = await loaded;
-    expect(hotels!.map((h) => h.name), ['Zephyr Inn', 'Alpine Lodge']);
+    expect(
+      viewModel.hotelsNotifier.value?.map((h) => h.name),
+      ['Zephyr Inn', 'Alpine Lodge'],
+    );
   });
 
-  test('sort button toggles order and notifies descendingList', () async {
-    final initialLoad = viewModel.hotels.firstWhere((h) => h != null);
+  test('sort button toggles order and notifies descendingNotifier', () async {
     viewModel.init();
-    await initialLoad;
+    await Future<void>.delayed(Duration.zero);
 
     final descendingUpdates = <bool>[];
-    final subscription = viewModel.descendingList.listen(descendingUpdates.add);
+    void listener() =>
+        descendingUpdates.add(viewModel.descendingNotifier.value);
+    viewModel.descendingNotifier.addListener(listener);
 
-    final resorted = viewModel.hotels.firstWhere((h) => h != null);
     viewModel.onSortButtonTapped();
-    final hotels = await resorted;
+    await Future<void>.delayed(Duration.zero);
 
     expect(descendingUpdates, [false]);
-    expect(hotels!.map((h) => h.name), ['Alpine Lodge', 'Zephyr Inn']);
+    expect(
+      viewModel.hotelsNotifier.value?.map((h) => h.name),
+      ['Alpine Lodge', 'Zephyr Inn'],
+    );
 
-    await subscription.cancel();
+    viewModel.descendingNotifier.removeListener(listener);
   });
 
   test('search is debounced so rapid keystrokes only trigger one re-query', () {

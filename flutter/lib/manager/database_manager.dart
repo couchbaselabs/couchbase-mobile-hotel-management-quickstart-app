@@ -21,6 +21,7 @@ import '../model/error_model.dart';
 import '../model/hotel.dart';
 import 'configuration_manager.dart';
 import 'error_manager.dart';
+import 'fts_query.dart';
 
 abstract class DatabaseManaging {
   Stream<List<Hotel>> get queryUpdates;
@@ -113,48 +114,49 @@ class DatabaseManager implements DatabaseManaging {
     }
   }
 
-  void _setupReplication() {
+  // Fire-and-forget from initialize() -- sync setup involves network calls
+  // and must not block app startup -- but everything inside is wrapped in a
+  // single try/catch so a failure anywhere in this chain (bad config, bad
+  // URL, replicator creation failing) reaches ErrorManager instead of
+  // becoming an unhandled Future rejection that only appears in the console.
+  Future<void> _setupReplication() async {
     try {
-      final configManager = ConfigurationManager();
-      configManager.loadConfiguration().then((config) {
-        if (config.capellaEndpointUrl.isEmpty) return;
+      final config = await ConfigurationManager().loadConfiguration();
+      // Empty endpoint is the documented, intentional local-only mode (see
+      // README), not a misconfiguration -- nothing to surface here.
+      if (config.capellaEndpointUrl.isEmpty) return;
 
-        final col = _collection;
-        if (col == null) return;
+      final col = _collection;
+      if (col == null) return;
 
-        final targetEndpoint = UrlEndpoint(
-          Uri.parse(config.capellaEndpointUrl),
-        );
-        final replConfig = ReplicatorConfiguration(
-          target: targetEndpoint,
-          replicatorType: ReplicatorType.pushAndPull,
-          continuous: true,
-          authenticator: BasicAuthenticator(
-            username: config.username,
-            password: config.password,
-          ),
-        );
-        replConfig.addCollection(col);
+      final targetEndpoint = UrlEndpoint(Uri.parse(config.capellaEndpointUrl));
+      final replConfig = ReplicatorConfiguration(
+        target: targetEndpoint,
+        replicatorType: ReplicatorType.pushAndPull,
+        continuous: true,
+        authenticator: BasicAuthenticator(
+          username: config.username,
+          password: config.password,
+        ),
+      );
+      replConfig.addCollection(col);
 
-        SyncReplicator.create(replConfig).then((replicator) {
-          _replicator = replicator;
-          _replicator!.addChangeListener((change) {
-            if (!_replicatorStatusController.isClosed) {
-              _replicatorStatusController.add(change.status.activity.name);
-            }
-            if (change.status.error != null) {
-              final error = change.status.error!;
-              ErrorManager().showError(
-                ErrorModel(
-                  title: 'Sync Error',
-                  message: 'Replication error: $error',
-                ),
-              );
-            }
-          });
-          _replicator!.start();
-        });
+      _replicator = await SyncReplicator.create(replConfig);
+      _replicator!.addChangeListener((change) {
+        if (!_replicatorStatusController.isClosed) {
+          _replicatorStatusController.add(change.status.activity.name);
+        }
+        if (change.status.error != null) {
+          final error = change.status.error!;
+          ErrorManager().showError(
+            ErrorModel(
+              title: 'Sync Error',
+              message: 'Replication error: $error',
+            ),
+          );
+        }
       });
+      _replicator!.start();
     } catch (e) {
       ErrorManager().showError(
         ErrorModel(
@@ -180,7 +182,7 @@ class DatabaseManager implements DatabaseManaging {
       SyncQuery query;
 
       if (textSearch.isNotEmpty) {
-        final pattern = '$textSearch*';
+        final pattern = buildFtsPrefixPattern(textSearch);
         query = db.createQuery(
           'SELECT META().id AS documentId, * FROM `$_scopeName`.`$_collectionName` AS hotel '
           'WHERE MATCH($_ftsIndexName, \$searchTerm) '
@@ -254,8 +256,14 @@ class DatabaseManager implements DatabaseManaging {
       final existingDoc = col.document(docId);
       if (existingDoc == null) return;
 
+      // Merge only the fields this form owns onto the existing document
+      // instead of replacing it outright -- a travel-sample hotel document
+      // carries fields (geo, reviews, pricemin/pricemax, public_likes, ...)
+      // that aren't part of the Hotel model, and setData() would wipe them.
       final mutableDoc = existingDoc.toMutable();
-      mutableDoc.setData(hotel.toMap());
+      for (final entry in hotel.toMap().entries) {
+        mutableDoc.setValue(entry.value, key: entry.key);
+      }
       col.saveDocument(mutableDoc);
     } catch (e) {
       ErrorManager().showError(

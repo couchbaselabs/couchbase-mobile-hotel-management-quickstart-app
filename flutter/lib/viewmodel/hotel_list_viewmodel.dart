@@ -15,6 +15,7 @@
 //
 
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import '../model/hotel.dart';
 import '../manager/database_manager.dart';
 
@@ -25,18 +26,21 @@ class HotelListViewModel {
 
   static const _searchDebounceDuration = Duration(milliseconds: 300);
 
-  final _hotelsController = StreamController<List<Hotel>?>.broadcast();
-  Stream<List<Hotel>?> get hotels => _hotelsController.stream;
-
-  Stream<String> get replicatorStatus => _dbManager.replicatorStatus;
-
-  final _descendingListController = StreamController<bool>.broadcast();
-  Stream<bool> get descendingList => _descendingListController.stream;
+  // ValueNotifier (unlike a broadcast StreamController) always holds and
+  // immediately exposes its current value, so a listener attached after
+  // construction -- e.g. a widget built on a later frame -- still sees the
+  // current state instead of only future updates.
+  final ValueNotifier<List<Hotel>?> hotelsNotifier = ValueNotifier(null);
+  final ValueNotifier<String> replicatorStatusNotifier = ValueNotifier(
+    'Stopped',
+  );
+  final ValueNotifier<bool> descendingNotifier = ValueNotifier(true);
 
   bool _descending = true;
   String _searchText = '';
   Timer? _searchDebounce;
   StreamSubscription<List<Hotel>>? _queryUpdatesSubscription;
+  StreamSubscription<String>? _replicatorStatusSubscription;
 
   void init() {
     _bindListeners();
@@ -45,9 +49,12 @@ class HotelListViewModel {
 
   void _bindListeners() {
     _queryUpdatesSubscription = _dbManager.queryUpdates.listen((hotels) {
-      if (!_hotelsController.isClosed) {
-        _hotelsController.add(hotels);
-      }
+      hotelsNotifier.value = hotels;
+    });
+    _replicatorStatusSubscription = _dbManager.replicatorStatus.listen((
+      status,
+    ) {
+      replicatorStatusNotifier.value = status;
     });
   }
 
@@ -66,7 +73,7 @@ class HotelListViewModel {
   void onSortButtonTapped() {
     _descending = !_descending;
     query();
-    _descendingListController.add(_descending);
+    descendingNotifier.value = _descending;
   }
 
   Future<void> deleteHotel(Hotel hotel) => _dbManager.deleteHotel(hotel);
@@ -74,7 +81,9 @@ class HotelListViewModel {
   void dispose() {
     _searchDebounce?.cancel();
     _queryUpdatesSubscription?.cancel();
-    _hotelsController.close();
-    _descendingListController.close();
+    _replicatorStatusSubscription?.cancel();
+    hotelsNotifier.dispose();
+    replicatorStatusNotifier.dispose();
+    descendingNotifier.dispose();
   }
 }

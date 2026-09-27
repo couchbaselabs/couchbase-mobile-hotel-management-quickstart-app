@@ -55,10 +55,10 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: StreamBuilder<String>(
-          stream: _viewModel.titleStream,
-          initialData: 'New Hotel',
-          builder: (context, snapshot) => Text(snapshot.data!),
+        title: ValueListenableBuilder<String>(
+          valueListenable: _viewModel.titleNotifier,
+          builder: (context, title, _) =>
+              Text(title.isEmpty ? 'New Hotel' : title),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -66,12 +66,11 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
           onPressed: widget.onBack,
         ),
         actions: [
-          StreamBuilder<bool>(
-            stream: _viewModel.modelDidChange,
-            initialData: false,
-            builder: (context, snapshot) {
+          ValueListenableBuilder<bool>(
+            valueListenable: _viewModel.modelDidChangeNotifier,
+            builder: (context, didChange, _) {
               return TextButton(
-                onPressed: snapshot.data! == true
+                onPressed: didChange
                     ? () {
                         _viewModel.onAcceptButton();
                         widget.onSaved();
@@ -90,35 +89,32 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
           FormSection(
             title: 'Basic Info',
             children: [
-              StreamBuilder<String>(
-                stream: _viewModel.nameStream,
-                initialData: _viewModel.currentHotel.name,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.nameNotifier,
+                builder: (context, name, _) {
                   return FormTextField(
                     label: 'Name',
-                    value: snapshot.data!,
+                    value: name,
                     onValueChange: (text) => _viewModel.updateName(text),
                   );
                 },
               ),
-              StreamBuilder<String>(
-                stream: _viewModel.titleStream,
-                initialData: _viewModel.currentHotel.title,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.titleNotifier,
+                builder: (context, title, _) {
                   return FormTextField(
                     label: 'Title',
-                    value: snapshot.data!,
+                    value: title,
                     onValueChange: (text) => _viewModel.updateTitle(text),
                   );
                 },
               ),
-              StreamBuilder<String>(
-                stream: _viewModel.descriptionStream,
-                initialData: _viewModel.currentHotel.description,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.descriptionNotifier,
+                builder: (context, description, _) {
                   return FormTextField(
                     label: 'Description',
-                    value: snapshot.data!,
+                    value: description,
                     onValueChange: (text) => _viewModel.updateDescription(text),
                     maxLines: 5,
                   );
@@ -131,46 +127,42 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
           FormSection(
             title: 'Location',
             children: [
-              StreamBuilder<String>(
-                stream: _viewModel.addressStream,
-                initialData: _viewModel.currentHotel.address,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.addressNotifier,
+                builder: (context, address, _) {
                   return FormTextField(
                     label: 'Address',
-                    value: snapshot.data!,
+                    value: address,
                     onValueChange: (text) => _viewModel.updateAddress(text),
                   );
                 },
               ),
-              StreamBuilder<String>(
-                stream: _viewModel.cityStream,
-                initialData: _viewModel.currentHotel.city,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.cityNotifier,
+                builder: (context, city, _) {
                   return FormTextField(
                     label: 'City',
-                    value: snapshot.data!,
+                    value: city,
                     onValueChange: (text) => _viewModel.updateCity(text),
                   );
                 },
               ),
-              StreamBuilder<String>(
-                stream: _viewModel.stateStream,
-                initialData: _viewModel.currentHotel.state,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.stateNotifier,
+                builder: (context, state, _) {
                   return FormTextField(
                     label: 'State',
-                    value: snapshot.data!,
+                    value: state,
                     onValueChange: (text) => _viewModel.updateState(text),
                   );
                 },
               ),
-              StreamBuilder<String>(
-                stream: _viewModel.countryStream,
-                initialData: _viewModel.currentHotel.country,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.countryNotifier,
+                builder: (context, country, _) {
                   return FormTextField(
                     label: 'Country',
-                    value: snapshot.data!,
+                    value: country,
                     onValueChange: (text) => _viewModel.updateCountry(text),
                   );
                 },
@@ -182,37 +174,34 @@ class _HotelFormScreenState extends State<HotelFormScreen> {
           FormSection(
             title: 'Contact',
             children: [
-              StreamBuilder<String>(
-                stream: _viewModel.phoneStream,
-                initialData: _viewModel.currentHotel.phone,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.phoneNotifier,
+                builder: (context, phone, _) {
                   return FormTextField(
                     label: 'Phone',
-                    value: snapshot.data!,
+                    value: phone,
                     onValueChange: (text) => _viewModel.updatePhone(text),
                     keyboardType: TextInputType.phone,
                   );
                 },
               ),
-              StreamBuilder<String>(
-                stream: _viewModel.emailStream,
-                initialData: _viewModel.currentHotel.email,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.emailNotifier,
+                builder: (context, email, _) {
                   return FormTextField(
                     label: 'Email',
-                    value: snapshot.data!,
+                    value: email,
                     onValueChange: (text) => _viewModel.updateEmail(text),
                     keyboardType: TextInputType.emailAddress,
                   );
                 },
               ),
-              StreamBuilder<String>(
-                stream: _viewModel.urlStream,
-                initialData: _viewModel.currentHotel.url,
-                builder: (context, snapshot) {
+              ValueListenableBuilder<String>(
+                valueListenable: _viewModel.urlNotifier,
+                builder: (context, url, _) {
                   return FormTextField(
                     label: 'Website',
-                    value: snapshot.data!,
+                    value: url,
                     onValueChange: (text) => _viewModel.updateUrl(text),
                     keyboardType: TextInputType.url,
                   );

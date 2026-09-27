@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-import 'dart:async';
+import 'package:flutter/foundation.dart';
 import '../model/hotel.dart';
 import '../model/hotel_form_model.dart';
 import '../manager/database_manager.dart';
@@ -25,49 +25,42 @@ class HotelFormViewModel {
   final DatabaseManaging _dbManager;
   final ViewMode viewMode;
 
-  // Individual field streams for fine-grained UI updates
-  final _nameController = StreamController<String>.broadcast();
-  final _titleController = StreamController<String>.broadcast();
-  final _descriptionController = StreamController<String>.broadcast();
-  final _addressController = StreamController<String>.broadcast();
-  final _cityController = StreamController<String>.broadcast();
-  final _stateController = StreamController<String>.broadcast();
-  final _countryController = StreamController<String>.broadcast();
-  final _phoneController = StreamController<String>.broadcast();
-  final _emailController = StreamController<String>.broadcast();
-  final _urlController = StreamController<String>.broadcast();
-
-  Stream<String> get nameStream => _nameController.stream;
-  Stream<String> get titleStream => _titleController.stream;
-  Stream<String> get descriptionStream => _descriptionController.stream;
-  Stream<String> get addressStream => _addressController.stream;
-  Stream<String> get cityStream => _cityController.stream;
-  Stream<String> get stateStream => _stateController.stream;
-  Stream<String> get countryStream => _countryController.stream;
-  Stream<String> get phoneStream => _phoneController.stream;
-  Stream<String> get emailStream => _emailController.stream;
-  Stream<String> get urlStream => _urlController.stream;
+  // Individual ValueNotifiers for fine-grained UI updates. Unlike a
+  // broadcast StreamController, a ValueNotifier always holds and exposes its
+  // current value, so a ValueListenableBuilder built on a later frame still
+  // sees the right starting value with no separate "initialData" needed.
+  final ValueNotifier<String> nameNotifier;
+  final ValueNotifier<String> titleNotifier;
+  final ValueNotifier<String> descriptionNotifier;
+  final ValueNotifier<String> addressNotifier;
+  final ValueNotifier<String> cityNotifier;
+  final ValueNotifier<String> stateNotifier;
+  final ValueNotifier<String> countryNotifier;
+  final ValueNotifier<String> phoneNotifier;
+  final ValueNotifier<String> emailNotifier;
+  final ValueNotifier<String> urlNotifier;
 
   // Model change detection
-  final _modelDidChangeController = StreamController<bool>.broadcast();
-  Stream<bool> get modelDidChange => _modelDidChangeController.stream;
+  final ValueNotifier<bool> modelDidChangeNotifier = ValueNotifier(false);
 
   late HotelFormModel _currentHotel;
   late HotelFormModel _originalModel;
 
   HotelFormModel get currentHotel => _currentHotel;
 
-  // NOTE: the field streams and `modelDidChange` intentionally do NOT emit
-  // an initial value here. These are broadcast streams, which never replay
-  // past events to a listener that subscribes later (e.g. a StreamBuilder
-  // built after this constructor runs) -- an event emitted here would be
-  // silently dropped. Every consumer already reads the starting value
-  // synchronously via `currentHotel`/`viewMode` (see each StreamBuilder's
-  // `initialData` in HotelFormScreen); the streams only need to carry
-  // subsequent updates.
   HotelFormViewModel({Hotel? existingHotel})
     : _dbManager = DatabaseManagerProvider.factory(),
-      viewMode = existingHotel == null ? ViewMode.add : ViewMode.edit {
+      viewMode = existingHotel == null ? ViewMode.add : ViewMode.edit,
+      nameNotifier = ValueNotifier(existingHotel?.name ?? ''),
+      titleNotifier = ValueNotifier(existingHotel?.title ?? ''),
+      descriptionNotifier = ValueNotifier(existingHotel?.description ?? ''),
+      addressNotifier = ValueNotifier(existingHotel?.address ?? ''),
+      cityNotifier = ValueNotifier(existingHotel?.city ?? ''),
+      stateNotifier = ValueNotifier(existingHotel?.state ?? ''),
+      countryNotifier = ValueNotifier(existingHotel?.country ?? ''),
+      phoneNotifier = ValueNotifier(existingHotel?.phone ?? ''),
+      emailNotifier = ValueNotifier(existingHotel?.email ?? ''),
+      urlNotifier = ValueNotifier(existingHotel?.url ?? '') {
     _currentHotel = existingHotel != null
         ? HotelFormModel.fromHotel(existingHotel)
         : HotelFormModel();
@@ -76,66 +69,66 @@ class HotelFormViewModel {
 
   void updateName(String value) {
     _currentHotel.name = value;
-    _nameController.add(value);
+    nameNotifier.value = value;
     _checkDidChange();
   }
 
   void updateTitle(String value) {
     _currentHotel.title = value;
-    _titleController.add(value);
+    titleNotifier.value = value;
     _checkDidChange();
   }
 
   void updateDescription(String value) {
     _currentHotel.description = value;
-    _descriptionController.add(value);
+    descriptionNotifier.value = value;
     _checkDidChange();
   }
 
   void updateAddress(String value) {
     _currentHotel.address = value;
-    _addressController.add(value);
+    addressNotifier.value = value;
     _checkDidChange();
   }
 
   void updateCity(String value) {
     _currentHotel.city = value;
-    _cityController.add(value);
+    cityNotifier.value = value;
     _checkDidChange();
   }
 
   void updateState(String value) {
     _currentHotel.state = value;
-    _stateController.add(value);
+    stateNotifier.value = value;
     _checkDidChange();
   }
 
   void updateCountry(String value) {
     _currentHotel.country = value;
-    _countryController.add(value);
+    countryNotifier.value = value;
     _checkDidChange();
   }
 
   void updatePhone(String value) {
     _currentHotel.phone = value;
-    _phoneController.add(value);
+    phoneNotifier.value = value;
     _checkDidChange();
   }
 
   void updateEmail(String value) {
     _currentHotel.email = value;
-    _emailController.add(value);
+    emailNotifier.value = value;
     _checkDidChange();
   }
 
   void updateUrl(String value) {
     _currentHotel.url = value;
-    _urlController.add(value);
+    urlNotifier.value = value;
     _checkDidChange();
   }
 
   void _checkDidChange() {
-    _modelDidChangeController.add(_currentHotel != _originalModel);
+    modelDidChangeNotifier.value = _currentHotel != _originalModel;
   }
 
   void onAcceptButton() {
@@ -146,20 +139,20 @@ class HotelFormViewModel {
       _dbManager.updateHotel(hotelData);
     }
     _originalModel = _currentHotel.copy();
-    _modelDidChangeController.add(false);
+    modelDidChangeNotifier.value = false;
   }
 
   void dispose() {
-    _nameController.close();
-    _titleController.close();
-    _descriptionController.close();
-    _addressController.close();
-    _cityController.close();
-    _stateController.close();
-    _countryController.close();
-    _phoneController.close();
-    _emailController.close();
-    _urlController.close();
-    _modelDidChangeController.close();
+    nameNotifier.dispose();
+    titleNotifier.dispose();
+    descriptionNotifier.dispose();
+    addressNotifier.dispose();
+    cityNotifier.dispose();
+    stateNotifier.dispose();
+    countryNotifier.dispose();
+    phoneNotifier.dispose();
+    emailNotifier.dispose();
+    urlNotifier.dispose();
+    modelDidChangeNotifier.dispose();
   }
 }
