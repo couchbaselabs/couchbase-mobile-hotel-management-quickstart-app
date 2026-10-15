@@ -32,3 +32,10 @@ Android/google-services.json
 
 # Android Profiling
 Android/*.hprof
+
+# Dotnet binaries
+dotnet/**/obj/
+dotnet/**/bin/
+
+# Visual Studio
+.vs
